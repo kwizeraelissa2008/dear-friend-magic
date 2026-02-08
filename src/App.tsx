@@ -7,8 +7,12 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import SIS from "./pages/SIS";
 import ClassStudents from "./pages/ClassStudents";
+import StudentProfile from "./pages/StudentProfile";
+import IncidentReport from "./pages/IncidentReport";
+import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
 import CalendarPage from "./pages/CalendarPage";
+import Analytics from "./pages/Analytics";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
@@ -25,10 +29,13 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/sis" element={<SIS />} />
           <Route path="/sis/class/:classId" element={<ClassStudents />} />
+          <Route path="/sis/student/:studentId" element={<StudentProfile />} />
+          <Route path="/report" element={<IncidentReport />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/about" element={<About />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

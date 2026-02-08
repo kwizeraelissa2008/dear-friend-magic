@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Users, AlertTriangle, Calendar, FileCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
+  const { hasRole } = useAuth();
   const [stats, setStats] = useState({
     totalStudents: 0,
     pendingIncidents: 0,
@@ -12,67 +16,28 @@ const Dashboard = () => {
     upcomingEvents: 0,
   });
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchStats(); }, []);
 
   const fetchStats = async () => {
-    const { count: studentsCount } = await supabase
-      .from("students")
-      .select("*", { count: "exact", head: true });
-
-    const { count: incidentsCount } = await supabase
-      .from("incidents")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "pending");
-
-    const { count: permissionsCount } = await supabase
-      .from("permissions")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "active");
-
-    const { count: eventsCount } = await supabase
-      .from("events")
-      .select("*", { count: "exact", head: true })
-      .gte("event_date", new Date().toISOString().split("T")[0]);
-
+    const [students, incidents, permissions, events] = await Promise.all([
+      supabase.from("students").select("*", { count: "exact", head: true }),
+      supabase.from("incidents").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("permissions").select("*", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("events").select("*", { count: "exact", head: true }).gte("event_date", new Date().toISOString().split("T")[0]),
+    ]);
     setStats({
-      totalStudents: studentsCount || 0,
-      pendingIncidents: incidentsCount || 0,
-      activePermissions: permissionsCount || 0,
-      upcomingEvents: eventsCount || 0,
+      totalStudents: students.count || 0,
+      pendingIncidents: incidents.count || 0,
+      activePermissions: permissions.count || 0,
+      upcomingEvents: events.count || 0,
     });
   };
 
   const statCards = [
-    {
-      title: "Total Students",
-      value: stats.totalStudents,
-      description: "Registered in the system",
-      icon: Users,
-      color: "text-primary",
-    },
-    {
-      title: "Pending Incidents",
-      value: stats.pendingIncidents,
-      description: "Awaiting review",
-      icon: AlertTriangle,
-      color: "text-warning",
-    },
-    {
-      title: "Active Permissions",
-      value: stats.activePermissions,
-      description: "Currently valid",
-      icon: FileCheck,
-      color: "text-success",
-    },
-    {
-      title: "Upcoming Events",
-      value: stats.upcomingEvents,
-      description: "Scheduled events",
-      icon: Calendar,
-      color: "text-info",
-    },
+    { title: "Total Students", value: stats.totalStudents, description: "Registered in the system", icon: Users, color: "text-primary" },
+    { title: "Pending Incidents", value: stats.pendingIncidents, description: "Awaiting review", icon: AlertTriangle, color: "text-warning" },
+    { title: "Active Permissions", value: stats.activePermissions, description: "Currently valid", icon: FileCheck, color: "text-success" },
+    { title: "Upcoming Events", value: stats.upcomingEvents, description: "Scheduled events", icon: Calendar, color: "text-info" },
   ];
 
   return (
@@ -80,13 +45,11 @@ const Dashboard = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome to School Discipline Management System
-          </p>
+          <p className="text-muted-foreground">Welcome to School Discipline Management System</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((stat) => {
+          {statCards.map(stat => {
             const Icon = stat.icon;
             return (
               <Card key={stat.title} className="hover:shadow-md transition-shadow">
@@ -110,9 +73,14 @@ const Dashboard = () => {
               <CardDescription>Frequently used features</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Navigate using the menu above to access different modules of the system.
-              </p>
+              <Link to="/sis"><Button variant="outline" className="w-full justify-start gap-2"><Users className="w-4 h-4" /> View Students</Button></Link>
+              {hasRole("teacher", "discipline_staff") && (
+                <Link to="/report"><Button variant="outline" className="w-full justify-start gap-2"><AlertTriangle className="w-4 h-4" /> Report Incident</Button></Link>
+              )}
+              {hasRole("dod") && (
+                <Link to="/reports"><Button variant="outline" className="w-full justify-start gap-2"><FileCheck className="w-4 h-4" /> Review Reports</Button></Link>
+              )}
+              <Link to="/calendar"><Button variant="outline" className="w-full justify-start gap-2"><Calendar className="w-4 h-4" /> View Calendar</Button></Link>
             </CardContent>
           </Card>
 

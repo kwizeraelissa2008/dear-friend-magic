@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,18 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
-  Home,
-  Users,
-  Bell,
-  Calendar,
-  FileText,
-  Info,
-  LogOut,
-  GraduationCap,
-  Menu,
-  X,
+  Home, Users, Bell, Calendar, FileText, Info, LogOut, GraduationCap, Menu, X, AlertTriangle, BarChart3,
 } from "lucide-react";
-import { User, Session } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -33,97 +25,60 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { user, session, profile, userRole, hasRole, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (!session) {
-          navigate("/auth");
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (user) {
-      fetchUserData();
+    if (!isLoading && !session) {
+      navigate("/auth");
     }
+  }, [session, isLoading, navigate]);
+
+  useEffect(() => {
+    if (user) fetchUnreadCount();
   }, [user]);
 
-  const fetchUserData = async () => {
+  useEffect(() => {
     if (!user) return;
+    const channel = supabase
+      .channel("unread-count")
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
+        fetchUnreadCount();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
-    // Fetch profile
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (profileData) {
-      setProfile(profileData);
-    }
-
-    // Fetch user role
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (roleData) {
-      setUserRole(roleData.role);
-    }
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    const { count } = await supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false);
+    setUnreadCount(count || 0);
   };
 
   const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success("Signed out successfully");
-      navigate("/auth");
-    } catch (error: any) {
-      toast.error("Error signing out");
-    }
+    await supabase.auth.signOut();
+    toast.success("Signed out successfully");
+    navigate("/auth");
   };
 
   const navItems = [
     { name: "Home", path: "/", icon: Home },
     { name: "SIS", path: "/sis", icon: Users },
-    { name: "Notifications", path: "/notifications", icon: Bell },
+    ...(hasRole("teacher", "discipline_staff") ? [{ name: "Report", path: "/report", icon: AlertTriangle }] : []),
+    { name: "Notifications", path: "/notifications", icon: Bell, badge: unreadCount },
     { name: "Calendar", path: "/calendar", icon: Calendar },
-    ...(userRole === "dod" ? [{ name: "Reports", path: "/reports", icon: FileText }] : []),
+    ...(hasRole("dod") ? [{ name: "Reports", path: "/reports", icon: FileText }] : []),
+    ...(hasRole("principal", "dos") ? [{ name: "Analytics", path: "/analytics", icon: BarChart3 }] : []),
     { name: "About", path: "/about", icon: Info },
   ];
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
@@ -136,27 +91,26 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
+            {navItems.map(item => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
                 <Link key={item.path} to={item.path}>
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    className="gap-2"
-                  >
+                  <Button variant={isActive ? "default" : "ghost"} size="sm" className="gap-2 relative">
                     <Icon className="w-4 h-4" />
                     {item.name}
+                    {item.badge ? (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                        {item.badge}
+                      </Badge>
+                    ) : null}
                   </Button>
                 </Link>
               );
             })}
           </nav>
 
-          {/* User Menu */}
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -173,47 +127,32 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
-                    {userRole && (
-                      <p className="text-xs text-primary capitalize">{userRole.replace("_", " ")}</p>
-                    )}
+                    {userRole && <p className="text-xs text-primary capitalize">{userRole.replace("_", " ")}</p>}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}><LogOut className="mr-2 h-4 w-4" /> Sign Out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t bg-card p-4">
             <nav className="flex flex-col gap-2">
-              {navItems.map((item) => {
+              {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 return (
                   <Link key={item.path} to={item.path} onClick={() => setMobileMenuOpen(false)}>
-                    <Button
-                      variant={isActive ? "default" : "ghost"}
-                      size="sm"
-                      className="w-full justify-start gap-2"
-                    >
+                    <Button variant={isActive ? "default" : "ghost"} size="sm" className="w-full justify-start gap-2">
                       <Icon className="w-4 h-4" />
                       {item.name}
+                      {item.badge ? <Badge variant="destructive" className="ml-auto">{item.badge}</Badge> : null}
                     </Button>
                   </Link>
                 );
@@ -223,10 +162,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto p-4 md:p-6 lg:p-8">
-        {children}
-      </main>
+      <main className="container mx-auto p-4 md:p-6 lg:p-8">{children}</main>
     </div>
   );
 };

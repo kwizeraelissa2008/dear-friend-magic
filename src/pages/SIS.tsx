@@ -3,34 +3,48 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import AddClassDialog from "@/components/AddClassDialog";
+import { toast } from "sonner";
 
-interface Class {
+interface ClassWithCount {
   id: string;
   name: string;
   grade_level: string | null;
+  student_count: number;
 }
 
 const SIS = () => {
-  const [classes, setClasses] = useState<Class[]>([]);
+  const { hasRole } = useAuth();
+  const [classes, setClasses] = useState<ClassWithCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchClasses();
-  }, []);
+  useEffect(() => { fetchClasses(); }, []);
 
   const fetchClasses = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("classes")
-      .select("*")
-      .order("name");
-
-    if (data) {
-      setClasses(data);
+    const { data: classData } = await supabase.from("classes").select("*").order("name");
+    if (classData) {
+      // Get student counts
+      const withCounts = await Promise.all(
+        classData.map(async (c) => {
+          const { count } = await supabase.from("students").select("*", { count: "exact", head: true }).eq("class_id", c.id);
+          return { ...c, student_count: count || 0 };
+        })
+      );
+      setClasses(withCounts);
     }
     setIsLoading(false);
+  };
+
+  const handleDeleteClass = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { error } = await supabase.from("classes").delete().eq("id", id);
+    if (error) toast.error("Failed to delete class");
+    else { toast.success("Class deleted"); fetchClasses(); }
   };
 
   return (
@@ -39,33 +53,21 @@ const SIS = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Student Information System</h1>
-            <p className="text-muted-foreground">
-              View and manage student profiles by class
-            </p>
+            <p className="text-muted-foreground">View and manage student profiles by class</p>
           </div>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add Class
-          </Button>
+          {hasRole("dos") && <AddClassDialog onClassAdded={fetchClasses} />}
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading classes...</p>
-          </div>
+          <div className="text-center py-12"><p className="text-muted-foreground">Loading classes...</p></div>
         ) : classes.length === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>No Classes Found</CardTitle>
-              <CardDescription>
-                Start by adding a class to organize your students
-              </CardDescription>
+              <CardDescription>Start by adding a class to organize your students</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Your First Class
-              </Button>
+              {hasRole("dos") && <AddClassDialog onClassAdded={fetchClasses} />}
             </CardContent>
           </Card>
         ) : (
@@ -77,9 +79,8 @@ const SIS = () => {
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <CardTitle className="text-xl">{classItem.name}</CardTitle>
-                        {classItem.grade_level && (
-                          <CardDescription>{classItem.grade_level}</CardDescription>
-                        )}
+                        {classItem.grade_level && <CardDescription>{classItem.grade_level}</CardDescription>}
+                        <p className="text-sm text-muted-foreground">{classItem.student_count} student{classItem.student_count !== 1 ? "s" : ""}</p>
                       </div>
                       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                         <Users className="w-6 h-6 text-primary" />
@@ -87,9 +88,14 @@ const SIS = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Button variant="secondary" size="sm" className="w-full">
-                      View Students
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="secondary" size="sm" className="flex-1">View Students</Button>
+                      {hasRole("dos") && (
+                        <Button variant="outline" size="icon" className="shrink-0 text-destructive" onClick={(e) => handleDeleteClass(e, classItem.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </Link>

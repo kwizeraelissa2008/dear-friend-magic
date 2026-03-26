@@ -15,6 +15,7 @@ const AddClassDialog = ({ onClassAdded }: AddClassDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
+  const [stream, setStream] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -23,13 +24,12 @@ const AddClassDialog = ({ onClassAdded }: AddClassDialogProps) => {
     const { error } = await supabase.from("classes").insert({
       name: name.trim(),
       grade_level: gradeLevel.trim() || null,
+      stream: stream.trim() || null,
     });
     if (error) { toast.error("Failed to add class"); }
     else {
       toast.success("Class added");
-      setOpen(false);
-      setName("");
-      setGradeLevel("");
+      setOpen(false); setName(""); setGradeLevel(""); setStream("");
       onClassAdded();
     }
     setIsLoading(false);
@@ -43,8 +43,9 @@ const AddClassDialog = ({ onClassAdded }: AddClassDialogProps) => {
       <DialogContent>
         <DialogHeader><DialogTitle>Add New Class</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <div><Label>Class Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Form 1A" /></div>
-          <div><Label>Grade Level (optional)</Label><Input value={gradeLevel} onChange={e => setGradeLevel(e.target.value)} placeholder="e.g. Grade 9" /></div>
+          <div><Label>Class Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Form 1A" /></div>
+          <div><Label>Grade Level</Label><Input value={gradeLevel} onChange={e => setGradeLevel(e.target.value)} placeholder="e.g. Grade 9" /></div>
+          <div><Label>Stream</Label><Input value={stream} onChange={e => setStream(e.target.value)} placeholder="e.g. East, West" /></div>
           <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
             {isLoading && <Loader2 className="mr-2 w-4 h-4 animate-spin" />} Add Class
           </Button>

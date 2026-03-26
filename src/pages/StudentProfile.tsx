@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Shield, Clock, Edit, Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Shield, Clock, Plus, Edit, Phone, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -23,6 +24,9 @@ interface Student {
   photo_url: string | null;
   total_marks: number;
   class_id: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+  status: string;
 }
 
 interface Permission {
@@ -39,6 +43,7 @@ interface Incident {
   description: string;
   severity: string;
   status: string;
+  location: string | null;
   marks_deducted: number | null;
   deduction_reason: string | null;
   created_at: string;
@@ -54,10 +59,10 @@ const StudentProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [permDialogOpen, setPermDialogOpen] = useState(false);
   const [permForm, setPermForm] = useState({ title: "", description: "", expires_at: "" });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", parent_name: "", parent_phone: "", status: "active" });
 
-  useEffect(() => {
-    if (studentId) fetchAll();
-  }, [studentId]);
+  useEffect(() => { if (studentId) fetchAll(); }, [studentId]);
 
   const fetchAll = async () => {
     setIsLoading(true);
@@ -66,32 +71,56 @@ const StudentProfile = () => {
       supabase.from("permissions").select("*").eq("student_id", studentId).order("created_at", { ascending: false }),
       supabase.from("incidents").select("*").eq("student_id", studentId).order("created_at", { ascending: false }),
     ]);
-
     if (studentRes.data) {
-      setStudent(studentRes.data);
+      setStudent(studentRes.data as Student);
+      setEditForm({
+        name: studentRes.data.name,
+        parent_name: (studentRes.data as any).parent_name || "",
+        parent_phone: (studentRes.data as any).parent_phone || "",
+        status: (studentRes.data as any).status || "active",
+      });
       if (studentRes.data.class_id) {
         const { data: cls } = await supabase.from("classes").select("name").eq("id", studentRes.data.class_id).single();
         if (cls) setClassName(cls.name);
       }
     }
     if (permRes.data) setPermissions(permRes.data);
-    if (incRes.data) setIncidents(incRes.data);
+    if (incRes.data) setIncidents(incRes.data as Incident[]);
     setIsLoading(false);
   };
 
   const handleGrantPermission = async () => {
     if (!user || !studentId) return;
     const { error } = await supabase.from("permissions").insert({
-      student_id: studentId,
-      title: permForm.title,
-      description: permForm.description,
-      expires_at: new Date(permForm.expires_at).toISOString(),
-      granted_by: user.id,
+      student_id: studentId, title: permForm.title, description: permForm.description,
+      expires_at: new Date(permForm.expires_at).toISOString(), granted_by: user.id,
     });
     if (error) { toast.error("Failed to grant permission"); return; }
+    await supabase.from("audit_logs").insert({
+      action: "permission_granted", performed_by: user.id, target_id: studentId,
+      details: `Permission: ${permForm.title}`,
+    });
     toast.success("Permission granted");
     setPermDialogOpen(false);
     setPermForm({ title: "", description: "", expires_at: "" });
+    fetchAll();
+  };
+
+  const handleEditStudent = async () => {
+    if (!studentId || !user) return;
+    const { error } = await supabase.from("students").update({
+      name: editForm.name,
+      parent_name: editForm.parent_name || null,
+      parent_phone: editForm.parent_phone || null,
+      status: editForm.status,
+    }).eq("id", studentId);
+    if (error) { toast.error("Failed to update student"); return; }
+    await supabase.from("audit_logs").insert({
+      action: "student_updated", performed_by: user.id, target_id: studentId,
+      details: `Updated student info: ${editForm.name}`,
+    });
+    toast.success("Student updated");
+    setEditDialogOpen(false);
     fetchAll();
   };
 
@@ -99,6 +128,7 @@ const StudentProfile = () => {
   if (!student) return <DashboardLayout><p className="text-center py-12 text-muted-foreground">Student not found</p></DashboardLayout>;
 
   const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  const statusColor = student.status === "active" ? "default" : student.status === "suspended" ? "secondary" : "destructive";
 
   return (
     <DashboardLayout>
@@ -107,10 +137,37 @@ const StudentProfile = () => {
           <Link to={student.class_id ? `/sis/class/${student.class_id}` : "/sis"}>
             <Button variant="ghost" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Student Profile</h1>
+          <h1 className="text-3xl font-bold tracking-tight flex-1">Student Profile</h1>
+          {hasRole("dos") && (
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2"><Edit className="w-4 h-4" /> Edit</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Edit Student</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div><Label>Full Name</Label><Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} /></div>
+                  <div><Label>Parent/Guardian Name</Label><Input value={editForm.parent_name} onChange={e => setEditForm(f => ({ ...f, parent_name: e.target.value }))} /></div>
+                  <div><Label>Parent Phone</Label><Input value={editForm.parent_phone} onChange={e => setEditForm(f => ({ ...f, parent_phone: e.target.value }))} /></div>
+                  <div>
+                    <Label>Status</Label>
+                    <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="suspended">Suspended</SelectItem>
+                        <SelectItem value="expelled">Expelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleEditStudent} className="w-full">Save Changes</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
-        {/* Student Info Card */}
+        {/* Student Info */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-6">
@@ -118,10 +175,13 @@ const StudentProfile = () => {
                 <AvatarImage src={student.photo_url || undefined} />
                 <AvatarFallback className="text-2xl bg-primary/10 text-primary">{getInitials(student.name)}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 space-y-2 text-center md:text-left">
-                <h2 className="text-2xl font-bold">{student.name}</h2>
+              <div className="flex-1 space-y-3 text-center md:text-left">
+                <div className="flex items-center gap-3 justify-center md:justify-start">
+                  <h2 className="text-2xl font-bold">{student.name}</h2>
+                  <Badge variant={statusColor} className="capitalize">{student.status}</Badge>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">Student ID:</span> <strong>{student.student_id}</strong></div>
+                  <div><span className="text-muted-foreground">Admission No:</span> <strong>{student.student_id}</strong></div>
                   <div><span className="text-muted-foreground">Class:</span> <strong>{className || "Unassigned"}</strong></div>
                   <div><span className="text-muted-foreground">Gender:</span> <strong className="capitalize">{student.gender}</strong></div>
                   <div><span className="text-muted-foreground">DOB:</span> <strong>{new Date(student.date_of_birth).toLocaleDateString()}</strong></div>
@@ -132,6 +192,16 @@ const StudentProfile = () => {
                     </Badge>
                   </div>
                 </div>
+                {(student.parent_name || student.parent_phone) && (
+                  <div className="flex gap-4 text-sm pt-2 border-t">
+                    {student.parent_name && (
+                      <span className="flex items-center gap-1"><User className="w-4 h-4 text-muted-foreground" /> {student.parent_name}</span>
+                    )}
+                    {student.parent_phone && (
+                      <span className="flex items-center gap-1"><Phone className="w-4 h-4 text-muted-foreground" /> {student.parent_phone}</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -147,12 +217,12 @@ const StudentProfile = () => {
             {hasRole("dod") && (
               <Dialog open={permDialogOpen} onOpenChange={setPermDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="gap-2"><Plus className="w-4 h-4" /> Grant Permission</Button>
+                  <Button size="sm" className="gap-2"><Plus className="w-4 h-4" /> Grant</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>Grant Permission</DialogTitle></DialogHeader>
                   <div className="space-y-4">
-                    <div><Label>Title</Label><Input value={permForm.title} onChange={e => setPermForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Lost student card" /></div>
+                    <div><Label>Title</Label><Input value={permForm.title} onChange={e => setPermForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Late entry" /></div>
                     <div><Label>Description</Label><Textarea value={permForm.description} onChange={e => setPermForm(p => ({ ...p, description: e.target.value }))} placeholder="Details..." /></div>
                     <div><Label>Expires At</Label><Input type="datetime-local" value={permForm.expires_at} onChange={e => setPermForm(p => ({ ...p, expires_at: e.target.value }))} /></div>
                     <Button onClick={handleGrantPermission} className="w-full">Grant Permission</Button>
@@ -181,10 +251,10 @@ const StudentProfile = () => {
           </CardContent>
         </Card>
 
-        {/* Incident History */}
+        {/* Incidents */}
         <Card>
           <CardHeader>
-            <CardTitle>Incident History</CardTitle>
+            <CardTitle>Incident History ({incidents.length})</CardTitle>
             <CardDescription>Reported incidents for this student</CardDescription>
           </CardHeader>
           <CardContent>
@@ -195,15 +265,17 @@ const StudentProfile = () => {
                 {incidents.map(inc => (
                   <div key={inc.id} className="p-3 rounded-lg border space-y-1">
                     <div className="flex items-center justify-between">
-                      <Badge variant={inc.status === "approved" ? "default" : "secondary"}>{inc.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={inc.status === "approved" ? "default" : inc.status === "rejected" ? "destructive" : "secondary"}>{inc.status}</Badge>
+                        <Badge variant="outline" className="capitalize">{inc.severity}</Badge>
+                        {inc.location && <Badge variant="outline">{inc.location}</Badge>}
+                      </div>
                       <span className="text-xs text-muted-foreground">{new Date(inc.created_at).toLocaleDateString()}</span>
                     </div>
                     <p className="text-sm">{inc.description}</p>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span>Severity: <strong className="capitalize">{inc.severity}</strong></span>
-                      {inc.marks_deducted ? <span>Marks deducted: <strong>{inc.marks_deducted}</strong></span> : null}
-                      {inc.deduction_reason && <span>Reason: {inc.deduction_reason}</span>}
-                    </div>
+                    {inc.marks_deducted ? (
+                      <p className="text-xs text-destructive font-medium">-{inc.marks_deducted} marks ({inc.deduction_reason})</p>
+                    ) : null}
                   </div>
                 ))}
               </div>

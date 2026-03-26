@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
-  Home, Users, Bell, Calendar, FileText, Info, LogOut, GraduationCap, Menu, X, AlertTriangle, BarChart3,
+  Home, Users, Bell, Calendar, FileText, Info, LogOut, GraduationCap, Menu, X, AlertTriangle, BarChart3, ScrollText,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -70,6 +70,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Calendar", path: "/calendar", icon: Calendar },
     ...(hasRole("dod") ? [{ name: "Reports", path: "/reports", icon: FileText }] : []),
     ...(hasRole("principal", "dos") ? [{ name: "Analytics", path: "/analytics", icon: BarChart3 }] : []),
+    ...(hasRole("principal", "dos", "dod") ? [{ name: "Audit Logs", path: "/audit-logs", icon: ScrollText }] : []),
     { name: "About", path: "/about", icon: Info },
   ];
 

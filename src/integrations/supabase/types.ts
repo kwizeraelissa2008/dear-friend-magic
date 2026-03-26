@@ -14,12 +14,40 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          id: string
+          performed_by: string
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          performed_by: string
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          performed_by?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           created_at: string
           grade_level: string | null
           id: string
           name: string
+          stream: string | null
           updated_at: string
         }
         Insert: {
@@ -27,6 +55,7 @@ export type Database = {
           grade_level?: string | null
           id?: string
           name: string
+          stream?: string | null
           updated_at?: string
         }
         Update: {
@@ -34,6 +63,7 @@ export type Database = {
           grade_level?: string | null
           id?: string
           name?: string
+          stream?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -81,7 +111,9 @@ export type Database = {
           created_at: string
           deduction_reason: string | null
           description: string
+          evidence_url: string | null
           id: string
+          location: string | null
           marks_deducted: number | null
           reporter_id: string
           severity: Database["public"]["Enums"]["incident_severity"]
@@ -95,7 +127,9 @@ export type Database = {
           created_at?: string
           deduction_reason?: string | null
           description: string
+          evidence_url?: string | null
           id?: string
+          location?: string | null
           marks_deducted?: number | null
           reporter_id: string
           severity: Database["public"]["Enums"]["incident_severity"]
@@ -109,7 +143,9 @@ export type Database = {
           created_at?: string
           deduction_reason?: string | null
           description?: string
+          evidence_url?: string | null
           id?: string
+          location?: string | null
           marks_deducted?: number | null
           reporter_id?: string
           severity?: Database["public"]["Enums"]["incident_severity"]
@@ -236,7 +272,10 @@ export type Database = {
           gender: string
           id: string
           name: string
+          parent_name: string | null
+          parent_phone: string | null
           photo_url: string | null
+          status: string
           student_id: string
           total_marks: number
           updated_at: string
@@ -248,7 +287,10 @@ export type Database = {
           gender: string
           id?: string
           name: string
+          parent_name?: string | null
+          parent_phone?: string | null
           photo_url?: string | null
+          status?: string
           student_id: string
           total_marks?: number
           updated_at?: string
@@ -260,7 +302,10 @@ export type Database = {
           gender?: string
           id?: string
           name?: string
+          parent_name?: string | null
+          parent_phone?: string | null
           photo_url?: string | null
+          status?: string
           student_id?: string
           total_marks?: number
           updated_at?: string

@@ -20,19 +20,21 @@ interface CsvStudent {
   gender: string;
   date_of_birth: string;
   student_id: string;
+  parent_name?: string;
+  parent_phone?: string;
   photo_url?: string;
 }
 
 const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // Manual form
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
   const [dob, setDob] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [parentName, setParentName] = useState("");
+  const [parentPhone, setParentPhone] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
-  // CSV
   const [csvStudents, setCsvStudents] = useState<CsvStudent[]>([]);
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
 
@@ -41,20 +43,22 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
     setIsLoading(true);
     const { error } = await supabase.from("students").insert({
       name, gender, date_of_birth: dob, student_id: studentId, class_id: classId,
+      parent_name: parentName || null, parent_phone: parentPhone || null,
       photo_url: photoUrl || null,
     });
-    if (error) toast.error(error.message);
-    else {
+    if (error) {
+      if (error.message.includes("duplicate")) toast.error("A student with this admission number already exists");
+      else toast.error(error.message);
+    } else {
       toast.success("Student added");
-      setOpen(false);
-      resetForm();
-      onStudentAdded();
+      setOpen(false); resetForm(); onStudentAdded();
     }
     setIsLoading(false);
   };
 
   const resetForm = () => {
-    setName(""); setGender(""); setDob(""); setStudentId(""); setPhotoUrl("");
+    setName(""); setGender(""); setDob(""); setStudentId("");
+    setParentName(""); setParentPhone(""); setPhotoUrl("");
     setCsvStudents([]); setCsvErrors([]);
   };
 
@@ -72,26 +76,27 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
       const missing = required.filter(r => !normalized.includes(r));
       if (missing.length > 0) { setCsvErrors([`Missing columns: ${missing.join(", ")}`]); return; }
 
-      const nameIdx = normalized.indexOf("name");
-      const genderIdx = normalized.indexOf("gender");
-      const dobIdx = normalized.indexOf("dateofbirth");
-      const sidIdx = normalized.indexOf("studentid");
-      const photoIdx = normalized.indexOf("photourl");
-
+      const idx = (col: string) => normalized.indexOf(col);
       const students: CsvStudent[] = [];
       const errors: string[] = [];
+      const seenIds = new Set<string>();
+
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(",").map(c => c.trim());
-        if (!cols[nameIdx]) { errors.push(`Row ${i + 1}: Missing name`); continue; }
-        if (!cols[genderIdx]) { errors.push(`Row ${i + 1}: Missing gender`); continue; }
-        if (!cols[dobIdx]) { errors.push(`Row ${i + 1}: Missing DOB`); continue; }
-        if (!cols[sidIdx]) { errors.push(`Row ${i + 1}: Missing student ID`); continue; }
+        if (!cols[idx("name")]) { errors.push(`Row ${i + 1}: Missing name`); continue; }
+        if (!cols[idx("gender")]) { errors.push(`Row ${i + 1}: Missing gender`); continue; }
+        if (!cols[idx("dateofbirth")]) { errors.push(`Row ${i + 1}: Missing DOB`); continue; }
+        if (!cols[idx("studentid")]) { errors.push(`Row ${i + 1}: Missing student ID`); continue; }
+        if (seenIds.has(cols[idx("studentid")])) { errors.push(`Row ${i + 1}: Duplicate student ID ${cols[idx("studentid")]}`); continue; }
+        seenIds.add(cols[idx("studentid")]);
         students.push({
-          name: cols[nameIdx],
-          gender: cols[genderIdx],
-          date_of_birth: cols[dobIdx],
-          student_id: cols[sidIdx],
-          photo_url: photoIdx >= 0 ? cols[photoIdx] : undefined,
+          name: cols[idx("name")],
+          gender: cols[idx("gender")],
+          date_of_birth: cols[idx("dateofbirth")],
+          student_id: cols[idx("studentid")],
+          parent_name: idx("parentname") >= 0 ? cols[idx("parentname")] : undefined,
+          parent_phone: idx("parentphone") >= 0 ? cols[idx("parentphone")] : undefined,
+          photo_url: idx("photourl") >= 0 ? cols[idx("photourl")] : undefined,
         });
       }
       setCsvStudents(students);
@@ -104,29 +109,26 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
     if (csvStudents.length === 0) return;
     setIsLoading(true);
     const rows = csvStudents.map(s => ({
-      ...s,
-      class_id: classId,
+      name: s.name, gender: s.gender, date_of_birth: s.date_of_birth, student_id: s.student_id,
+      class_id: classId, parent_name: s.parent_name || null, parent_phone: s.parent_phone || null,
       photo_url: s.photo_url || null,
     }));
     const { error } = await supabase.from("students").insert(rows);
-    if (error) toast.error(error.message);
-    else {
+    if (error) {
+      if (error.message.includes("duplicate")) toast.error("Some students have duplicate admission numbers");
+      else toast.error(error.message);
+    } else {
       toast.success(`${csvStudents.length} students added`);
-      setOpen(false);
-      resetForm();
-      onStudentAdded();
+      setOpen(false); resetForm(); onStudentAdded();
     }
     setIsLoading(false);
   };
 
   const downloadTemplate = () => {
-    const csv = "Name,Class,Gender,DateOfBirth,StudentID,PhotoURL\nJohn Doe,Form 1A,male,2010-05-15,STU001,\nJane Smith,Form 1A,female,2010-08-20,STU002,";
+    const csv = "Name,Gender,DateOfBirth,StudentID,ParentName,ParentPhone,PhotoURL\nJohn Doe,male,2010-05-15,STU001,Jane Doe,+254700000000,\nJane Smith,female,2010-08-20,STU002,Mary Smith,+254711111111,";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "student_template.csv";
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = "student_template.csv"; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -157,7 +159,9 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
                 </Select>
               </div>
               <div><Label>Date of Birth *</Label><Input type="date" value={dob} onChange={e => setDob(e.target.value)} /></div>
-              <div><Label>Student ID *</Label><Input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="STU001" /></div>
+              <div><Label>Admission No *</Label><Input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="STU001" /></div>
+              <div><Label>Parent/Guardian Name</Label><Input value={parentName} onChange={e => setParentName(e.target.value)} placeholder="Jane Doe" /></div>
+              <div><Label>Parent Phone</Label><Input value={parentPhone} onChange={e => setParentPhone(e.target.value)} placeholder="+254700000000" /></div>
               <div className="col-span-2"><Label>Photo URL (optional)</Label><Input value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://..." /></div>
             </div>
             <Button onClick={handleManualSubmit} disabled={isLoading} className="w-full">
@@ -169,7 +173,7 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Upload a CSV file with student data</p>
               <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-2">
-                <Download className="w-4 h-4" /> Download Template
+                <Download className="w-4 h-4" /> Template
               </Button>
             </div>
             <div className="border-2 border-dashed rounded-lg p-6 text-center">
@@ -193,7 +197,7 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
                         <TableHead>Name</TableHead>
                         <TableHead>Gender</TableHead>
                         <TableHead>DOB</TableHead>
-                        <TableHead>Student ID</TableHead>
+                        <TableHead>Adm No</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

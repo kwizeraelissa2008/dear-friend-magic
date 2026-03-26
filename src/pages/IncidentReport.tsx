@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { AlertTriangle, Loader2, Send, CheckCircle } from "lucide-react";
+import { AlertTriangle, Loader2, Send, CheckCircle, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,7 @@ interface StudentResult {
 }
 
 const severities = ["minor", "moderate", "serious", "severe", "critical"] as const;
+const locations = ["Classroom", "Dormitory", "Field", "Laboratory", "Library", "Cafeteria", "Assembly Hall", "Corridor", "Other"];
 
 const IncidentReport = () => {
   const { user, hasRole } = useAuth();
@@ -33,6 +34,8 @@ const IncidentReport = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<string>("");
+  const [location, setLocation] = useState<string>("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -53,16 +56,30 @@ const IncidentReport = () => {
 
   const handleSubmit = async () => {
     if (!selectedStudent || !description || !severity || !user) {
-      toast.error("Please fill in all fields");
+      toast.error("Please fill in all required fields");
       return;
     }
     setIsSubmitting(true);
     try {
+      let evidenceUrl: string | null = null;
+
+      // Upload evidence if provided
+      if (evidenceFile) {
+        const fileExt = evidenceFile.name.split(".").pop();
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from("evidence").upload(filePath, evidenceFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from("evidence").getPublicUrl(filePath);
+        evidenceUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase.from("incidents").insert({
         student_id: selectedStudent.id,
         reporter_id: user.id,
         description,
         severity: severity as any,
+        location: location || null,
+        evidence_url: evidenceUrl,
       });
       if (error) throw error;
 
@@ -72,11 +89,19 @@ const IncidentReport = () => {
         const notifications = dodUsers.map(d => ({
           user_id: d.user_id,
           title: "New Incident Report",
-          message: `${selectedStudent.name} has been reported. Severity: ${severity}`,
+          message: `${selectedStudent.name} reported for: ${description.slice(0, 80)}. Severity: ${severity}${location ? `. Location: ${location}` : ""}`,
           type: "incident",
         }));
         await supabase.from("notifications").insert(notifications);
       }
+
+      // Audit log
+      await supabase.from("audit_logs").insert({
+        action: "incident_reported",
+        performed_by: user.id,
+        target_id: selectedStudent.id,
+        details: `Reported ${selectedStudent.name} - ${severity} - ${description.slice(0, 100)}`,
+      });
 
       toast.success("Incident reported successfully!");
       navigate("/");
@@ -116,7 +141,7 @@ const IncidentReport = () => {
           <CardContent className="space-y-6">
             {/* Student Search */}
             <div className="space-y-2">
-              <Label>Student Name</Label>
+              <Label>Student Name *</Label>
               <Input
                 placeholder="Type student name to search..."
                 value={searchQuery}
@@ -176,31 +201,59 @@ const IncidentReport = () => {
 
             {/* Description */}
             <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                placeholder="Describe the incident in detail..."
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                rows={4}
-              />
+              <Label>Description *</Label>
+              <Textarea placeholder="Describe the incident in detail..." value={description} onChange={e => setDescription(e.target.value)} rows={4} />
             </div>
 
-            {/* Severity */}
+            {/* Severity & Location */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Severity *</Label>
+                <Select value={severity} onValueChange={setSeverity}>
+                  <SelectTrigger><SelectValue placeholder="Select severity" /></SelectTrigger>
+                  <SelectContent>
+                    {severities.map(s => (
+                      <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Select value={location} onValueChange={setLocation}>
+                  <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
+                  <SelectContent>
+                    {locations.map(l => (
+                      <SelectItem key={l} value={l}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Evidence Upload */}
             <div className="space-y-2">
-              <Label>Severity</Label>
-              <Select value={severity} onValueChange={setSeverity}>
-                <SelectTrigger><SelectValue placeholder="Select severity level" /></SelectTrigger>
-                <SelectContent>
-                  {severities.map(s => (
-                    <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Evidence (optional)</Label>
+              <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                {evidenceFile ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-primary" />
+                    <span className="text-sm">{evidenceFile.name}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setEvidenceFile(null)}>Remove</Button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground mb-2">Upload photo or document evidence</p>
+                    <Input type="file" accept="image/*,.pdf" className="max-w-xs mx-auto" onChange={e => setEvidenceFile(e.target.files?.[0] || null)} />
+                  </>
+                )}
+              </div>
             </div>
 
             <Button onClick={handleSubmit} disabled={isSubmitting || !selectedStudent || !description || !severity} className="w-full gap-2">
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Report Student
+              Report Incident
             </Button>
           </CardContent>
         </Card>

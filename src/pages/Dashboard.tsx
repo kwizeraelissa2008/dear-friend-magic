@@ -2,21 +2,25 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, AlertTriangle, Calendar, FileCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, AlertTriangle, Calendar, FileCheck, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 
-const Dashboard = () => {
-  const { hasRole } = useAuth();
-  const [stats, setStats] = useState({
-    totalStudents: 0,
-    pendingIncidents: 0,
-    activePermissions: 0,
-    upcomingEvents: 0,
-  });
+interface RecentActivity {
+  id: string;
+  action: string;
+  details: string | null;
+  created_at: string;
+}
 
-  useEffect(() => { fetchStats(); }, []);
+const Dashboard = () => {
+  const { hasRole, userRole, profile } = useAuth();
+  const [stats, setStats] = useState({ totalStudents: 0, pendingIncidents: 0, activePermissions: 0, upcomingEvents: 0 });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+
+  useEffect(() => { fetchStats(); fetchActivity(); }, []);
 
   const fetchStats = async () => {
     const [students, incidents, permissions, events] = await Promise.all([
@@ -33,19 +37,29 @@ const Dashboard = () => {
     });
   };
 
+  const fetchActivity = async () => {
+    const { data } = await supabase.from("audit_logs").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(10);
+    setRecentActivity(data || []);
+  };
+
   const statCards = [
     { title: "Total Students", value: stats.totalStudents, description: "Registered in the system", icon: Users, color: "text-primary" },
-    { title: "Pending Incidents", value: stats.pendingIncidents, description: "Awaiting review", icon: AlertTriangle, color: "text-warning" },
-    { title: "Active Permissions", value: stats.activePermissions, description: "Currently valid", icon: FileCheck, color: "text-success" },
-    { title: "Upcoming Events", value: stats.upcomingEvents, description: "Scheduled events", icon: Calendar, color: "text-info" },
+    { title: "Pending Incidents", value: stats.pendingIncidents, description: "Awaiting review", icon: AlertTriangle, color: "text-destructive" },
+    { title: "Active Permissions", value: stats.activePermissions, description: "Currently valid", icon: FileCheck, color: "text-accent" },
+    { title: "Upcoming Events", value: stats.upcomingEvents, description: "Scheduled events", icon: Calendar, color: "text-primary" },
   ];
+
+  const roleLabel = userRole ? userRole.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome to School Discipline Management System</p>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome, {profile?.full_name || "User"}</h1>
+          <p className="text-muted-foreground">
+            {roleLabel && <Badge variant="secondary" className="mr-2">{roleLabel}</Badge>}
+            School Discipline Management System
+          </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -70,7 +84,7 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Frequently used features</CardDescription>
+              <CardDescription>Based on your role</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <Link to="/sis"><Button variant="outline" className="w-full justify-start gap-2"><Users className="w-4 h-4" /> View Students</Button></Link>
@@ -80,19 +94,35 @@ const Dashboard = () => {
               {hasRole("dod") && (
                 <Link to="/reports"><Button variant="outline" className="w-full justify-start gap-2"><FileCheck className="w-4 h-4" /> Review Reports</Button></Link>
               )}
-              <Link to="/calendar"><Button variant="outline" className="w-full justify-start gap-2"><Calendar className="w-4 h-4" /> View Calendar</Button></Link>
+              {hasRole("principal", "dos") && (
+                <Link to="/analytics"><Button variant="outline" className="w-full justify-start gap-2"><Calendar className="w-4 h-4" /> View Analytics</Button></Link>
+              )}
+              <Link to="/calendar"><Button variant="outline" className="w-full justify-start gap-2"><Calendar className="w-4 h-4" /> Event Calendar</Button></Link>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest updates in the system</CardDescription>
+              <CardDescription>Latest actions in the system</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Activity feed will appear here as actions are performed in the system.
-              </p>
+              {recentActivity.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No recent activity.</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivity.map(a => (
+                    <div key={a.id} className="flex items-start gap-3 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium capitalize">{a.action.replace(/_/g, " ")}</p>
+                        {a.details && <p className="text-xs text-muted-foreground">{a.details.slice(0, 80)}</p>}
+                        <p className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

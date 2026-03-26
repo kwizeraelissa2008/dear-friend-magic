@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import SIS from "./pages/SIS";
 import ClassStudents from "./pages/ClassStudents";
 import StudentProfile from "./pages/StudentProfile";
@@ -13,6 +14,7 @@ import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
 import CalendarPage from "./pages/CalendarPage";
 import Analytics from "./pages/Analytics";
+import AuditLogs from "./pages/AuditLogs";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +29,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/sis" element={<SIS />} />
           <Route path="/sis/class/:classId" element={<ClassStudents />} />
           <Route path="/sis/student/:studentId" element={<StudentProfile />} />
@@ -35,6 +38,7 @@ const App = () => (
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/audit-logs" element={<AuditLogs />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

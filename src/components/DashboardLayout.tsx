@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
-  Home, Users, Bell, Calendar, FileText, Info, LogOut, GraduationCap, Menu, X, AlertTriangle, BarChart3, ScrollText,
+  Home, Users, Bell, Calendar, FileText, Info, LogOut, GraduationCap, Menu, X,
+  AlertTriangle, BarChart3, ScrollText, Shield, MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -62,14 +63,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     navigate("/auth");
   };
 
+  const roleLabel = userRole ? userRole.replace("_", " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "";
+
   const navItems = [
     { name: "Home", path: "/", icon: Home },
     { name: "SIS", path: "/sis", icon: Users },
     ...(hasRole("teacher", "discipline_staff") ? [{ name: "Report", path: "/report", icon: AlertTriangle }] : []),
+    { name: "Chat", path: "/chat", icon: MessageSquare },
     { name: "Notifications", path: "/notifications", icon: Bell, badge: unreadCount },
     { name: "Calendar", path: "/calendar", icon: Calendar },
     ...(hasRole("dod") ? [{ name: "Reports", path: "/reports", icon: FileText }] : []),
     ...(hasRole("principal", "dos") ? [{ name: "Analytics", path: "/analytics", icon: BarChart3 }] : []),
+    ...(hasRole("principal") ? [{ name: "Users", path: "/user-management", icon: Shield }] : []),
     ...(hasRole("principal", "dos", "dod") ? [{ name: "Audit Logs", path: "/audit-logs", icon: ScrollText }] : []),
     { name: "About", path: "/about", icon: Info },
   ];
@@ -128,7 +133,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
-                    {userRole && <p className="text-xs text-primary capitalize">{userRole.replace("_", " ")}</p>}
+                    {roleLabel && <p className="text-xs text-primary">{roleLabel}</p>}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

@@ -26,6 +26,8 @@ interface IncidentWithStudent {
   reporter_id: string;
   student_id: string;
   students: { id: string; name: string; photo_url: string | null; student_id: string; total_marks: number } | null;
+  reporter_name?: string;
+  reporter_role?: string;
 }
 
 const markOptions = [2, 3, 4, 5, 10];
@@ -54,7 +56,22 @@ const Reports = () => {
       .from("incidents")
       .select("*, students(id, name, photo_url, student_id, total_marks)")
       .order("created_at", { ascending: false });
-    setIncidents((data as any) || []);
+
+    // Enrich with reporter names
+    const reporterIds = [...new Set((data || []).map(d => d.reporter_id))];
+    const [{ data: profiles }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name").in("id", reporterIds),
+      supabase.from("user_roles").select("user_id, role").in("user_id", reporterIds),
+    ]);
+    const nameMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
+    const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
+
+    const enriched = (data || []).map(d => ({
+      ...d,
+      reporter_name: nameMap.get(d.reporter_id) || "Unknown",
+      reporter_role: roleMap.get(d.reporter_id) || "",
+    }));
+    setIncidents(enriched as any);
     setIsLoading(false);
   };
 
@@ -208,7 +225,11 @@ const Reports = () => {
                         </a>
                       )}
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xs text-muted-foreground">{new Date(inc.created_at).toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Reported by <strong>{inc.reporter_name}</strong>
+                          {inc.reporter_role && ` (${inc.reporter_role.replace("_", " ").replace(/\b\w/g, (c: string) => c.toUpperCase())})`}
+                          {" · "}{new Date(inc.created_at).toLocaleString()}
+                        </span>
                         <div className="flex gap-2">
                           {inc.status === "pending" && (
                             <>

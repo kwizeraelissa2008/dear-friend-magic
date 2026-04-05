@@ -16,6 +16,8 @@ import CalendarPage from "./pages/CalendarPage";
 import Analytics from "./pages/Analytics";
 import AuditLogs from "./pages/AuditLogs";
 import About from "./pages/About";
+import UserManagement from "./pages/UserManagement";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

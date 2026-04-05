@@ -6,8 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
+
+const roles = [
+  { value: "teacher", label: "Teacher" },
+  { value: "discipline_staff", label: "Discipline Staff" },
+  { value: "dos", label: "Dean of Studies" },
+  { value: "dod", label: "Dean of Discipline" },
+  { value: "principal", label: "Principal" },
+];
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -15,16 +24,28 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [desiredRole, setDesiredRole] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) redirectByRole(session.user.id);
+      if (session) checkStatusAndRedirect(session.user.id);
     });
   }, []);
 
-  const redirectByRole = async (userId: string) => {
+  const checkStatusAndRedirect = async (userId: string) => {
+    const { data: profile } = await supabase.from("profiles").select("status").eq("id", userId).single();
+    if (profile?.status === "pending") {
+      toast.info("Your account is pending approval by the Principal.");
+      await supabase.auth.signOut();
+      return;
+    }
+    if (profile?.status === "rejected") {
+      toast.error("Your account request was rejected.");
+      await supabase.auth.signOut();
+      return;
+    }
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
     const role = data?.role;
     switch (role) {
@@ -40,14 +61,16 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (!desiredRole) { toast.error("Please select your desired role"); return; }
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { data: { full_name: fullName }, emailRedirectTo: `${window.location.origin}/` },
+        options: { data: { full_name: fullName, desired_role: desiredRole }, emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) throw error;
-      toast.success("Account created! Please check your email to verify.");
+      // Update profile with pending status and desired role
+      toast.success("Account created! Your account is pending approval by the Principal. Please check your email to verify.");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -61,8 +84,22 @@ const Auth = () => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      toast.success("Signed in successfully!");
-      if (data.user) await redirectByRole(data.user.id);
+      if (data.user) {
+        // Check approval status
+        const { data: profile } = await supabase.from("profiles").select("status").eq("id", data.user.id).single();
+        if (profile?.status === "pending") {
+          toast.info("Your account is pending approval by the Principal.");
+          await supabase.auth.signOut();
+          return;
+        }
+        if (profile?.status === "rejected") {
+          toast.error("Your account request was rejected.");
+          await supabase.auth.signOut();
+          return;
+        }
+        toast.success("Signed in successfully!");
+        await checkStatusAndRedirect(data.user.id);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {
@@ -174,10 +211,26 @@ const Auth = () => {
                   <Label htmlFor="signup-password">Password</Label>
                   <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-role">Desired Role</Label>
+                  <Select value={desiredRole} onValueChange={setDesiredRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map(r => (
+                        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Account
                 </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  New accounts require approval by the Principal before access is granted.
+                </p>
               </form>
             </TabsContent>
           </Tabs>

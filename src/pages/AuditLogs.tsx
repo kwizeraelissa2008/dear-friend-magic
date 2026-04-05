@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollText, Clock } from "lucide-react";
+import { ScrollText, Clock, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { AlertTriangle } from "lucide-react";
 
 interface AuditLog {
   id: string;
@@ -14,6 +13,8 @@ interface AuditLog {
   target_id: string | null;
   details: string | null;
   created_at: string;
+  performer_name?: string;
+  performer_role?: string;
 }
 
 const AuditLogs = () => {
@@ -26,7 +27,20 @@ const AuditLogs = () => {
   const fetchLogs = async () => {
     setIsLoading(true);
     const { data } = await supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(200);
-    setLogs(data || []);
+
+    const performerIds = [...new Set((data || []).map(d => d.performed_by))];
+    const [{ data: profiles }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name").in("id", performerIds),
+      supabase.from("user_roles").select("user_id, role").in("user_id", performerIds),
+    ]);
+    const nameMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
+    const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
+
+    setLogs((data || []).map(d => ({
+      ...d,
+      performer_name: nameMap.get(d.performed_by) || "Unknown",
+      performer_role: roleMap.get(d.performed_by) || "",
+    })));
     setIsLoading(false);
   };
 
@@ -48,6 +62,8 @@ const AuditLogs = () => {
     if (action.includes("reported")) return "secondary";
     return "outline";
   };
+
+  const formatRole = (role?: string) => role ? role.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
 
   return (
     <DashboardLayout>
@@ -71,6 +87,10 @@ const AuditLogs = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={actionColor(log.action) as any} className="capitalize">{log.action.replace(/_/g, " ")}</Badge>
+                        <span className="text-xs font-medium">
+                          {log.performer_name}
+                          {log.performer_role && ` (${formatRole(log.performer_role)})`}
+                        </span>
                         <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</span>
                       </div>
                       {log.details && <p className="text-sm text-muted-foreground mt-1 truncate">{log.details}</p>}

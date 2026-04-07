@@ -452,6 +452,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_conversation_member: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "dod" | "dos" | "principal" | "teacher" | "discipline_staff"

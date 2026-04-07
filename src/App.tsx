@@ -19,6 +19,7 @@ import About from "./pages/About";
 import UserManagement from "./pages/UserManagement";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import AIAssistant from "./components/AIAssistant";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AIAssistant />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

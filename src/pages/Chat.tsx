@@ -51,16 +51,14 @@ const Chat = () => {
 
   useEffect(() => {
     if (user) {
-      fetchConversations();
-      fetchProfilesMap();
+      fetchProfilesMap().then(() => fetchConversations());
     }
   }, [user]);
 
   useEffect(() => {
     if (activeConv) fetchMessages(activeConv);
-  }, [activeConv]);
+  }, [activeConv, profilesMap]);
 
-  // Realtime messages
   useEffect(() => {
     if (!activeConv) return;
     const channel = supabase
@@ -75,7 +73,10 @@ const Chat = () => {
         const p = profilesMap.get(msg.sender_id);
         msg.sender_name = p?.full_name || "Unknown";
         msg.sender_role = p?.role;
-        setMessages(prev => [...prev, msg]);
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -113,7 +114,6 @@ const Chat = () => {
         .in("id", convIds)
         .order("updated_at", { ascending: false });
 
-      // For private conversations, resolve the other user's name
       if (convs) {
         const enriched = await Promise.all(convs.map(async (c) => {
           if (c.type === "private" && !c.name) {
@@ -123,8 +123,8 @@ const Chat = () => {
               .eq("conversation_id", c.id);
             const otherId = members?.find(m => m.user_id !== user!.id)?.user_id;
             if (otherId) {
-              const { data: otherProfile } = await supabase.from("profiles").select("full_name").eq("id", otherId).single();
-              return { ...c, name: otherProfile?.full_name || "Private Chat" };
+              const p = profilesMap.get(otherId);
+              return { ...c, name: p?.full_name || "Private Chat" };
             }
           }
           return c;
@@ -169,7 +169,8 @@ const Chat = () => {
 
   const startPrivateChat = async (otherUser: UserProfile) => {
     if (!user) return;
-    // Check if conversation already exists
+
+    // Check existing private conversations
     const { data: myConvs } = await supabase
       .from("conversation_members")
       .select("conversation_id")
@@ -183,7 +184,6 @@ const Chat = () => {
     const myIds = new Set(myConvs?.map(c => c.conversation_id) || []);
     const common = theirConvs?.filter(c => myIds.has(c.conversation_id)).map(c => c.conversation_id) || [];
 
-    // Check if any common conversation is private
     for (const cid of common) {
       const { data: conv } = await supabase.from("conversations").select("type").eq("id", cid).single();
       if (conv?.type === "private") {
@@ -193,33 +193,38 @@ const Chat = () => {
       }
     }
 
-    // Create new private conversation
-    const { data: newConv, error } = await supabase
+    // Create new conversation - use raw insert without .select() to avoid RLS issue
+    const newId = crypto.randomUUID();
+    const { error: convError } = await supabase
       .from("conversations")
-      .insert({ type: "private", name: null, created_by: user.id })
-      .select()
-      .single();
+      .insert({ id: newId, type: "private", name: null, created_by: user.id });
 
-    if (error || !newConv) {
-      toast.error("Failed to create conversation");
+    if (convError) {
+      toast.error("Failed to create conversation: " + convError.message);
       return;
     }
 
-    await supabase.from("conversation_members").insert([
-      { conversation_id: newConv.id, user_id: user.id },
-      { conversation_id: newConv.id, user_id: otherUser.id },
+    // Add both members
+    const { error: memberError } = await supabase.from("conversation_members").insert([
+      { conversation_id: newId, user_id: user.id },
+      { conversation_id: newId, user_id: otherUser.id },
     ]);
 
+    if (memberError) {
+      toast.error("Failed to add members: " + memberError.message);
+      return;
+    }
+
     setNewChatDialog(false);
-    fetchConversations();
-    setActiveConv(newConv.id);
+    await fetchConversations();
+    setActiveConv(newId);
+    toast.success(`Chat with ${otherUser.full_name} started!`);
   };
 
   const loadAllUsers = async () => {
     const { data } = await supabase
       .from("profiles")
       .select("id, full_name, email")
-      .eq("status", "approved")
       .neq("id", user!.id);
     setAllUsers(data || []);
   };
@@ -236,7 +241,6 @@ const Chat = () => {
   return (
     <DashboardLayout>
       <div className="flex gap-4 h-[calc(100vh-8rem)]">
-        {/* Conversation List */}
         <Card className="w-80 shrink-0 flex flex-col">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -295,16 +299,13 @@ const Chat = () => {
           </CardContent>
         </Card>
 
-        {/* Message Area */}
         <Card className="flex-1 flex flex-col">
           {activeConv ? (
             <>
               <CardHeader className="pb-2 border-b">
                 <CardTitle className="text-lg">
                   {activeConvData?.name || "Chat"}
-                  {activeConvData?.type === "group" && (
-                    <Badge variant="outline" className="ml-2 text-xs">Group</Badge>
-                  )}
+                  {activeConvData?.type === "group" && <Badge variant="outline" className="ml-2 text-xs">Group</Badge>}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 p-4 overflow-auto">

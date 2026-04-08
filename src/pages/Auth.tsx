@@ -10,13 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 
-const roles = [
-  { value: "teacher", label: "Teacher" },
-  { value: "discipline_staff", label: "Discipline Staff" },
-  { value: "dos", label: "Dean of Studies" },
-  { value: "dod", label: "Dean of Discipline" },
-  { value: "principal", label: "Principal" },
-];
+// Role selection removed - Principal assigns roles after approval
 
 const Auth = () => {
   const navigate = useNavigate();

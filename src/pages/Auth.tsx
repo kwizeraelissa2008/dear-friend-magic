@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { toast } from "sonner";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 
@@ -55,12 +55,11 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
-    if (!desiredRole) { toast.error("Please select your desired role"); return; }
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { data: { full_name: fullName, desired_role: desiredRole }, emailRedirectTo: `${window.location.origin}/` },
+        options: { data: { full_name: fullName }, emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) throw error;
       // Update profile with pending status and desired role
@@ -204,19 +203,6 @@ const Auth = () => {
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-role">Desired Role</Label>
-                  <Select value={desiredRole} onValueChange={setDesiredRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map(r => (
-                        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

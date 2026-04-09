@@ -18,19 +18,28 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Handle document processing actions
+    // Handle specific actions
     if (action === "parse_students" && fileContent) {
       return await handleStudentImport(fileContent, fileName, LOVABLE_API_KEY, supabase);
     }
-
     if (action === "process_document" && fileContent) {
       return await handleDocumentProcess(fileContent, fileName, fileType, context, messages, LOVABLE_API_KEY, supabase);
+    }
+    if (action === "execute_action") {
+      return await handleExecuteAction(messages, context, LOVABLE_API_KEY, supabase);
     }
 
     // Fetch live system data for context
     const systemData = await fetchSystemData(supabase);
-
     const systemPrompt = buildSystemPrompt(systemData, context);
+
+    // Check if the latest user message requests a data modification
+    const lastMsg = messages?.[messages.length - 1]?.content?.toLowerCase() || "";
+    const isActionRequest = detectActionIntent(lastMsg);
+
+    if (isActionRequest) {
+      return await handleExecuteAction(messages, context, LOVABLE_API_KEY, supabase);
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -45,9 +54,7 @@ serve(async (req) => {
       }),
     });
 
-    if (!response.ok) {
-      return handleAIError(response);
-    }
+    if (!response.ok) return handleAIError(response);
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
@@ -59,6 +66,325 @@ serve(async (req) => {
     });
   }
 });
+
+function detectActionIntent(msg: string): boolean {
+  const actionKeywords = [
+    "add student", "create student", "register student", "enroll student",
+    "delete student", "remove student",
+    "update student", "edit student", "change student", "modify student",
+    "add class", "create class", "delete class", "remove class", "update class",
+    "create incident", "report incident", "add incident", "log incident",
+    "approve incident", "reject incident",
+    "grant permission", "create permission", "add permission",
+    "revoke permission", "expire permission",
+    "create event", "add event", "schedule event", "delete event",
+    "update marks", "deduct marks", "restore marks", "set marks",
+    "add notification", "send notification", "notify",
+  ];
+  return actionKeywords.some(kw => msg.includes(kw));
+}
+
+async function handleExecuteAction(
+  messages: any[],
+  context: string,
+  apiKey: string,
+  supabase: any
+): Promise<Response> {
+  const systemData = await fetchSystemData(supabase);
+
+  // Get class list for context
+  const { data: classes } = await supabase.from("classes").select("id, name, grade_level");
+  const classInfo = classes?.map((c: any) => `${c.name} (id: ${c.id}, grade: ${c.grade_level || 'N/A'})`).join(", ") || "None";
+
+  const actionPrompt = `You are an AI that executes database actions for the SDMS. Based on the conversation, determine the EXACT action to perform and return a JSON object.
+
+AVAILABLE ACTIONS:
+1. insert_student - Add a new student
+2. update_student - Update student fields  
+3. delete_student - Remove a student
+4. insert_class - Create a new class
+5. update_class - Update class fields
+6. delete_class - Remove a class
+7. insert_incident - Report an incident
+8. update_incident - Update incident (approve/reject/modify)
+9. insert_permission - Grant a permission
+10. update_permission - Update permission status
+11. insert_event - Create an event
+12. update_event - Update event details
+13. delete_event - Remove an event
+14. update_marks - Update student marks
+15. insert_notification - Send a notification
+16. bulk_insert_students - Add multiple students
+
+CURRENT SYSTEM DATA:
+${systemData}
+Available classes: ${classInfo}
+
+Current context: ${context}
+
+RULES:
+- Return ONLY valid JSON with the structure: { "action": "action_name", "data": {...}, "description": "what you did" }
+- For bulk_insert_students, data should be { "students": [...] }
+- For updates, include { "id": "uuid", "updates": {...} }
+- For deletes, include { "id": "uuid" } or { "identifier": "student_id_value" }
+- Use real class IDs from the list above
+- Gender must be "Male", "Female", or "Other"
+- date_of_birth format: YYYY-MM-DD
+- severity must be: minor, moderate, serious, severe, critical
+- status for incidents: pending, approved, rejected
+- If you cannot determine the action, return { "action": "none", "message": "explain what info is missing" }
+- NEVER make up UUIDs for existing records. If you need to find a record, return a search action first.`;
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: actionPrompt },
+        ...messages.slice(-5),
+      ],
+    }),
+  });
+
+  if (!response.ok) return handleAIError(response);
+
+  const result = await response.json();
+  const rawContent = result.choices?.[0]?.message?.content || "";
+
+  let jsonStr = rawContent.trim();
+  if (jsonStr.startsWith("```json")) jsonStr = jsonStr.slice(7);
+  if (jsonStr.startsWith("```")) jsonStr = jsonStr.slice(3);
+  if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
+  jsonStr = jsonStr.trim();
+
+  let actionPlan: any;
+  try {
+    actionPlan = JSON.parse(jsonStr);
+  } catch {
+    return streamText(`I understood your request but couldn't determine the exact action. Could you please be more specific? For example:\n- "Add student John Doe, ID: S001, Male, born 2008-05-15 to Senior 1A"\n- "Create a new class Senior 2B, grade S2"\n- "Report minor incident for student S001: late to class"`);
+  }
+
+  if (actionPlan.action === "none") {
+    return streamText(actionPlan.message || "I need more information to complete this action. Please provide specific details.");
+  }
+
+  // Execute the action
+  const execResult = await executeAction(actionPlan, supabase);
+  return streamText(execResult);
+}
+
+async function executeAction(plan: any, supabase: any): Promise<string> {
+  const { action, data } = plan;
+
+  try {
+    switch (action) {
+      case "insert_student": {
+        const { error } = await supabase.from("students").insert({
+          name: data.name,
+          student_id: data.student_id,
+          gender: data.gender,
+          date_of_birth: data.date_of_birth,
+          class_id: data.class_id || null,
+          parent_name: data.parent_name || null,
+          parent_phone: data.parent_phone || null,
+          total_marks: data.total_marks ?? 100,
+          status: "active",
+        });
+        if (error) return `❌ Failed to add student: ${error.message}`;
+        return `✅ **Student added successfully!**\n- Name: ${data.name}\n- ID: ${data.student_id}\n- Gender: ${data.gender}\n- DOB: ${data.date_of_birth}${data.class_id ? `\n- Class assigned` : ""}`;
+      }
+
+      case "bulk_insert_students": {
+        const students = data.students || [];
+        if (!students.length) return "❌ No students provided for bulk insert.";
+        let success = 0, failed = 0;
+        const errors: string[] = [];
+        for (const s of students) {
+          const { error } = await supabase.from("students").insert({
+            name: s.name, student_id: s.student_id, gender: s.gender,
+            date_of_birth: s.date_of_birth, class_id: s.class_id || null,
+            parent_name: s.parent_name || null, parent_phone: s.parent_phone || null,
+            total_marks: s.total_marks ?? 100, status: "active",
+          });
+          if (error) { failed++; errors.push(`${s.name}: ${error.message}`); } else { success++; }
+        }
+        let msg = `📊 **Bulk Import Results**\n✅ Added: ${success}\n❌ Failed: ${failed}`;
+        if (errors.length) msg += `\n\n**Errors:**\n${errors.slice(0, 5).map(e => `- ${e}`).join("\n")}`;
+        return msg;
+      }
+
+      case "update_student": {
+        let studentId = data.id;
+        if (!studentId && data.identifier) {
+          const { data: found } = await supabase.from("students").select("id").eq("student_id", data.identifier).single();
+          studentId = found?.id;
+        }
+        if (!studentId) return "❌ Could not find the student. Please provide a valid student ID.";
+        const { error } = await supabase.from("students").update(data.updates).eq("id", studentId);
+        if (error) return `❌ Failed to update student: ${error.message}`;
+        return `✅ **Student updated successfully!**\n${Object.entries(data.updates).map(([k, v]) => `- ${k}: ${v}`).join("\n")}`;
+      }
+
+      case "delete_student": {
+        let studentId = data.id;
+        if (!studentId && data.identifier) {
+          const { data: found } = await supabase.from("students").select("id, name").eq("student_id", data.identifier).single();
+          studentId = found?.id;
+          if (!studentId) return `❌ No student found with ID "${data.identifier}".`;
+        }
+        if (!studentId) return "❌ Please specify which student to delete.";
+        const { error } = await supabase.from("students").delete().eq("id", studentId);
+        if (error) return `❌ Failed to delete student: ${error.message}`;
+        return `✅ **Student deleted successfully.**`;
+      }
+
+      case "insert_class": {
+        const { error } = await supabase.from("classes").insert({
+          name: data.name, grade_level: data.grade_level || null, stream: data.stream || null,
+        });
+        if (error) return `❌ Failed to create class: ${error.message}`;
+        return `✅ **Class "${data.name}" created successfully!**${data.grade_level ? `\n- Grade: ${data.grade_level}` : ""}`;
+      }
+
+      case "update_class": {
+        if (!data.id) return "❌ Class ID is required for updates.";
+        const { error } = await supabase.from("classes").update(data.updates).eq("id", data.id);
+        if (error) return `❌ Failed to update class: ${error.message}`;
+        return `✅ **Class updated successfully!**`;
+      }
+
+      case "delete_class": {
+        if (!data.id) return "❌ Class ID is required for deletion.";
+        const { error } = await supabase.from("classes").delete().eq("id", data.id);
+        if (error) return `❌ Failed to delete class: ${error.message}`;
+        return `✅ **Class deleted successfully.**`;
+      }
+
+      case "insert_incident": {
+        let studentId = data.student_id;
+        if (!studentId && data.student_identifier) {
+          const { data: found } = await supabase.from("students").select("id").eq("student_id", data.student_identifier).single();
+          studentId = found?.id;
+        }
+        if (!studentId) return "❌ Could not find the student. Provide a valid student ID.";
+        const { error } = await supabase.from("incidents").insert({
+          student_id: studentId,
+          reporter_id: data.reporter_id || "00000000-0000-0000-0000-000000000000",
+          description: data.description,
+          severity: data.severity || "minor",
+          status: "pending",
+          location: data.location || null,
+          marks_deducted: data.marks_deducted || 0,
+          deduction_reason: data.deduction_reason || null,
+        });
+        if (error) return `❌ Failed to create incident: ${error.message}`;
+        return `✅ **Incident reported successfully!**\n- Severity: ${data.severity || "minor"}\n- Description: ${data.description}\n- Status: Pending approval`;
+      }
+
+      case "update_incident": {
+        if (!data.id) return "❌ Incident ID is required.";
+        const { error } = await supabase.from("incidents").update(data.updates).eq("id", data.id);
+        if (error) return `❌ Failed to update incident: ${error.message}`;
+        return `✅ **Incident updated.** ${data.updates.status ? `Status: ${data.updates.status}` : ""}`;
+      }
+
+      case "insert_permission": {
+        let studentId = data.student_id;
+        if (!studentId && data.student_identifier) {
+          const { data: found } = await supabase.from("students").select("id").eq("student_id", data.student_identifier).single();
+          studentId = found?.id;
+        }
+        if (!studentId) return "❌ Could not find the student.";
+        const { error } = await supabase.from("permissions").insert({
+          student_id: studentId,
+          granted_by: data.granted_by || "00000000-0000-0000-0000-000000000000",
+          title: data.title,
+          description: data.description,
+          expires_at: data.expires_at,
+          status: "active",
+        });
+        if (error) return `❌ Failed to grant permission: ${error.message}`;
+        return `✅ **Permission granted!**\n- Title: ${data.title}\n- Expires: ${data.expires_at}`;
+      }
+
+      case "update_permission": {
+        if (!data.id) return "❌ Permission ID is required.";
+        const { error } = await supabase.from("permissions").update(data.updates).eq("id", data.id);
+        if (error) return `❌ Failed to update permission: ${error.message}`;
+        return `✅ **Permission updated.**`;
+      }
+
+      case "insert_event": {
+        const { error } = await supabase.from("events").insert({
+          title: data.title,
+          description: data.description || null,
+          event_date: data.event_date,
+          event_time: data.event_time || null,
+          created_by: data.created_by || "00000000-0000-0000-0000-000000000000",
+        });
+        if (error) return `❌ Failed to create event: ${error.message}`;
+        return `✅ **Event "${data.title}" created!**\n- Date: ${data.event_date}`;
+      }
+
+      case "update_event": {
+        if (!data.id) return "❌ Event ID is required.";
+        const { error } = await supabase.from("events").update(data.updates).eq("id", data.id);
+        if (error) return `❌ Failed to update event: ${error.message}`;
+        return `✅ **Event updated.**`;
+      }
+
+      case "delete_event": {
+        if (!data.id) return "❌ Event ID is required.";
+        const { error } = await supabase.from("events").delete().eq("id", data.id);
+        if (error) return `❌ Failed to delete event: ${error.message}`;
+        return `✅ **Event deleted.**`;
+      }
+
+      case "update_marks": {
+        let studentId = data.id;
+        if (!studentId && data.identifier) {
+          const { data: found } = await supabase.from("students").select("id, total_marks").eq("student_id", data.identifier).single();
+          studentId = found?.id;
+        }
+        if (!studentId) return "❌ Student not found.";
+        const updates: any = {};
+        if (data.total_marks !== undefined) updates.total_marks = data.total_marks;
+        if (data.deduct) {
+          const { data: student } = await supabase.from("students").select("total_marks").eq("id", studentId).single();
+          updates.total_marks = Math.max(0, (student?.total_marks || 100) - data.deduct);
+        }
+        if (data.restore) {
+          const { data: student } = await supabase.from("students").select("total_marks").eq("id", studentId).single();
+          updates.total_marks = Math.min(100, (student?.total_marks || 0) + data.restore);
+        }
+        const { error } = await supabase.from("students").update(updates).eq("id", studentId);
+        if (error) return `❌ Failed to update marks: ${error.message}`;
+        return `✅ **Marks updated.** New total: ${updates.total_marks}`;
+      }
+
+      case "insert_notification": {
+        const { error } = await supabase.from("notifications").insert({
+          user_id: data.user_id,
+          title: data.title,
+          message: data.message,
+          type: data.type || "info",
+        });
+        if (error) return `❌ Failed to send notification: ${error.message}`;
+        return `✅ **Notification sent!**`;
+      }
+
+      default:
+        return `❓ Unknown action: ${action}. Please try rephrasing your request.`;
+    }
+  } catch (e: any) {
+    console.error("Action execution error:", e);
+    return `❌ Error executing action: ${e.message}`;
+  }
+}
 
 async function fetchSystemData(supabase: any): Promise<string> {
   try {
@@ -105,55 +431,49 @@ LIVE SYSTEM DATA:
 }
 
 function buildSystemPrompt(systemData: string, context: string): string {
-  return `You are SDMS Assistant, a powerful AI helper for the School Discipline Management System at Ecole des Sciences Byimana. You have FULL ACCESS to the system data and can help staff with:
+  return `You are SDMS Assistant, a powerful AI helper for the School Discipline Management System at Ecole des Sciences Byimana. You have FULL READ AND WRITE ACCESS to the system and can help staff with:
 
-- Viewing real-time statistics (students, incidents, classes, permissions)
-- Answering questions about student records and behavior
-- Providing guidance on discipline policies and procedures
-- Helping draft incident descriptions
-- Explaining student marks and deduction rules
-- Identifying at-risk students (low marks, repeat offenders)
-- Understanding how to use every feature of the system
+- Viewing and modifying real-time data (students, incidents, classes, permissions, events)
+- Adding, updating, and deleting students directly
+- Creating and managing classes
+- Reporting and approving/rejecting incidents
+- Granting and revoking permissions
+- Creating and managing events
+- Updating student marks (deductions and restorations)
+- Sending notifications to users
+- Processing uploaded documents and importing data
 - Providing data-driven insights and recommendations
-- Processing uploaded documents (CSV, Excel, PDF, images, JSON, TXT)
-- Extracting student data from any document format
-- Analyzing uploaded reports and dashboards
-- Detecting anomalies in uploaded data
 
 ${systemData}
 
-Current user context: ${context || "No context provided"}
+Current user context: ${context}
 
-DOCUMENT PROCESSING CAPABILITIES:
-- When users upload files, you analyze the content and extract structured data
-- You can identify students, incidents, grades, events from any document
-- You map extracted data to SDMS entities (students, incidents, classes, events, permissions)
-- You clearly label what is extracted vs inferred
-- You suggest specific actions like "Import X students into Class Y"
-- You can detect duplicates, missing data, and anomalies
-- For images: you perform OCR and layout understanding
+ACTION CAPABILITIES:
+You can directly modify the system. When users ask you to add, update, delete, or modify any data, DO IT directly.
+Examples of what you can do:
+- "Add student John Doe, ID S001, Male, born 2008-05-15" → adds the student
+- "Delete student S003" → removes them
+- "Create class Senior 3A, grade S3" → creates the class
+- "Report minor incident for S001: late to class" → creates the incident
+- "Deduct 5 marks from S001 for misconduct" → updates marks
+- "Grant permission for S001: medical leave until 2026-04-20" → creates permission
+- "Schedule event: Sports Day on 2026-05-01" → creates event
 
 RULES:
 - Keep responses concise and actionable
 - Use the real data provided to give specific answers
 - When asked about stats, reference the actual numbers
-- If asked to do something beyond your capabilities, explain what they should do in the system UI
 - Be professional and supportive
-- Always confirm before destructive operations
-- Never hallucinate missing data from files
-- Clearly separate extracted data from inferred data`;
+- Execute modification requests directly - don't just explain how to do it in the UI
+- After performing an action, confirm what was done
+- Never hallucinate data
+- Clearly separate extracted vs inferred data`;
 }
 
 async function handleDocumentProcess(
-  fileContent: string,
-  fileName: string,
-  fileType: string,
-  context: string,
-  messages: any[],
-  apiKey: string,
-  supabase: any
+  fileContent: string, fileName: string, fileType: string,
+  context: string, messages: any[], apiKey: string, supabase: any
 ): Promise<Response> {
-  // Use AI to analyze the document and determine what to do
   const analysisPrompt = `Analyze this uploaded document and provide structured insights for the School Discipline Management System.
 
 File: "${fileName}" (type: ${fileType})
@@ -179,14 +499,11 @@ If this is a student list, ask the user if they want you to import the students 
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",
       messages: [
-        { role: "system", content: "You are a document analysis AI for a School Discipline Management System. Analyze documents thoroughly and provide actionable insights. Always be specific about what data you found and what actions are possible." },
+        { role: "system", content: "You are a document analysis AI for a School Discipline Management System. Analyze documents thoroughly and provide actionable insights." },
         ...messages.slice(-3),
         { role: "user", content: analysisPrompt },
       ],
@@ -195,17 +512,11 @@ If this is a student list, ask the user if they want you to import the students 
   });
 
   if (!response.ok) return handleAIError(response);
-
-  return new Response(response.body, {
-    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-  });
+  return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
 }
 
 async function handleStudentImport(
-  fileContent: string,
-  fileName: string,
-  apiKey: string,
-  supabase: any
+  fileContent: string, fileName: string, apiKey: string, supabase: any
 ): Promise<Response> {
   const parsePrompt = `Parse this student data from file "${fileName}" into a JSON array. Each student should have these fields:
 - name (required, string)
@@ -222,10 +533,7 @@ ${fileContent.slice(0, 15000)}`;
 
   const parseResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",
       messages: [
@@ -254,11 +562,11 @@ ${fileContent.slice(0, 15000)}`;
   try {
     students = JSON.parse(jsonStr);
   } catch {
-    return streamText(`I couldn't parse the document "${fileName}" into student records. Please make sure it contains columns like: name, student_id, gender, date_of_birth.\n\nSupported formats:\n- CSV with headers\n- Tab-separated text\n- JSON array`);
+    return streamText(`I couldn't parse "${fileName}" into student records. Please ensure it has columns like: name, student_id, gender, date_of_birth.`);
   }
 
   if (!Array.isArray(students) || students.length === 0) {
-    return streamText(`No student records found in "${fileName}". Please ensure the document contains student data with at least: name, student_id, gender, and date_of_birth.`);
+    return streamText(`No student records found in "${fileName}".`);
   }
 
   const { data: classes } = await supabase.from("classes").select("id, name").limit(1);
@@ -272,45 +580,29 @@ ${fileContent.slice(0, 15000)}`;
       results.errors.push(`Missing required fields for: ${s.name || s.student_id || "unknown"}`);
       continue;
     }
-
     const gender = s.gender.charAt(0).toUpperCase() + s.gender.slice(1).toLowerCase();
     if (!["Male", "Female", "Other"].includes(gender)) {
       results.failed++;
       results.errors.push(`Invalid gender "${s.gender}" for ${s.name}`);
       continue;
     }
-
     const { error } = await supabase.from("students").insert({
-      name: s.name,
-      student_id: s.student_id,
-      gender,
-      date_of_birth: s.date_of_birth,
-      parent_name: s.parent_name || null,
-      parent_phone: s.parent_phone || null,
-      class_id: defaultClassId,
-      total_marks: 100,
-      status: "active",
+      name: s.name, student_id: s.student_id, gender,
+      date_of_birth: s.date_of_birth, parent_name: s.parent_name || null,
+      parent_phone: s.parent_phone || null, class_id: defaultClassId,
+      total_marks: 100, status: "active",
     });
-
-    if (error) {
-      results.failed++;
-      results.errors.push(`${s.name}: ${error.message}`);
-    } else {
-      results.success++;
-    }
+    if (error) { results.failed++; results.errors.push(`${s.name}: ${error.message}`); }
+    else { results.success++; }
   }
 
-  let responseMsg = `📄 **Document Import Results**\n\nFile: ${fileName}\nTotal records found: ${students.length}\n✅ Successfully added: ${results.success}\n❌ Failed: ${results.failed}`;
-
+  let responseMsg = `📄 **Import Results**\n\nFile: ${fileName}\nTotal: ${students.length}\n✅ Added: ${results.success}\n❌ Failed: ${results.failed}`;
   if (results.errors.length > 0) {
     responseMsg += `\n\n**Errors:**\n${results.errors.slice(0, 10).map(e => `- ${e}`).join("\n")}`;
-    if (results.errors.length > 10) responseMsg += `\n... and ${results.errors.length - 10} more errors`;
   }
-
   if (results.success > 0) {
-    responseMsg += `\n\n✨ ${results.success} students have been added to the system. You can view them in the Student Information System (SIS).`;
+    responseMsg += `\n\n✨ ${results.success} students added! View them in SIS.`;
   }
-
   return streamText(responseMsg);
 }
 
@@ -335,7 +627,6 @@ async function handleAIError(response: Response): Promise<Response> {
 function streamText(text: string): Response {
   const encoder = new TextEncoder();
   const chunks = text.match(/.{1,20}/g) || [text];
-
   const stream = new ReadableStream({
     start(controller) {
       chunks.forEach((chunk) => {
@@ -346,8 +637,5 @@ function streamText(text: string): Response {
       controller.close();
     },
   });
-
-  return new Response(stream, {
-    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-  });
+  return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
 }

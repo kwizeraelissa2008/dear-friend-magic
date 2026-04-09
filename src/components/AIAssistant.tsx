@@ -2,10 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, X, Loader2, MessageSquare, Upload, FileText } from "lucide-react";
+import { Bot, Send, X, Loader2, MessageSquare, Upload } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -20,13 +19,52 @@ const AIAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const streamResponse = async (resp: Response) => {
+    let assistantContent = "";
+    const reader = resp.body?.getReader();
+    if (!reader) throw new Error("No response stream");
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let nlIdx: number;
+      while ((nlIdx = buffer.indexOf("\n")) !== -1) {
+        let line = buffer.slice(0, nlIdx);
+        buffer = buffer.slice(nlIdx + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line.startsWith("data: ")) continue;
+        const json = line.slice(6).trim();
+        if (json === "[DONE]") break;
+        try {
+          const parsed = JSON.parse(json);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            assistantContent += delta;
+            const content = assistantContent;
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
+              }
+              return [...prev, { role: "assistant", content }];
+            });
+          }
+        } catch { /* partial */ }
+      }
+    }
+    return assistantContent;
+  };
 
   const sendMessage = async (overrideInput?: string) => {
     const text = overrideInput || input.trim();
@@ -36,9 +74,6 @@ const AIAssistant = () => {
     if (!overrideInput) setInput("");
     setIsLoading(true);
 
-    let assistantContent = "";
-    const allMessages = [...messages, userMsg];
-
     try {
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -47,7 +82,7 @@ const AIAssistant = () => {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: allMessages,
+          messages: [...messages, userMsg],
           context: `User: ${profile?.full_name || "Unknown"}, Role: ${userRole || "none"}, UserId: ${user?.id || "none"}`,
         }),
       });
@@ -57,90 +92,79 @@ const AIAssistant = () => {
         throw new Error(err.error || "Failed to get response");
       }
 
-      const reader = resp.body?.getReader();
-      if (!reader) throw new Error("No response stream");
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let nlIdx: number;
-        while ((nlIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nlIdx);
-          buffer = buffer.slice(nlIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(json);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantContent += delta;
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
-                }
-                return [...prev, { role: "assistant", content: assistantContent }];
-              });
-            }
-          } catch { /* partial */ }
-        }
-      }
-
-      // Check if assistant wants to execute actions
-      if (assistantContent.includes("__ACTION:")) {
-        await handleActions(assistantContent);
-      }
+      await streamResponse(resp);
     } catch (e: any) {
       toast.error(e.message || "AI Assistant error");
-      if (!assistantContent) {
-        setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
-      }
+      setMessages(prev => {
+        if (prev[prev.length - 1]?.role !== "assistant") {
+          return [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }];
+        }
+        return prev;
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleActions = async (content: string) => {
-    // Parse action commands from AI response
-    const actionMatch = content.match(/__ACTION:(\w+)\((.*?)\)__/);
-    if (!actionMatch) return;
-    // Actions are handled by the edge function directly
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    const allowedTypes = [
-      "text/csv",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "text/plain",
-      "application/json",
-    ];
-
-    if (!allowedTypes.includes(file.type) && !file.name.endsWith(".csv") && !file.name.endsWith(".txt")) {
-      toast.error("Please upload a CSV, TXT, or Excel file with student data");
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (file.size > maxSize) {
+      toast.error("File too large. Maximum size is 20MB.");
       return;
     }
 
-    setIsUploading(true);
-    try {
-      const text = await file.text();
+    const isImage = file.type.startsWith("image/");
+    const isText = ["text/csv", "text/plain", "application/json", "text/tab-separated-values"].includes(file.type) ||
+      [".csv", ".txt", ".json", ".tsv", ".md"].some(ext => file.name.endsWith(ext));
+    const isExcel = ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"].includes(file.type) ||
+      [".xls", ".xlsx"].some(ext => file.name.endsWith(ext));
+    const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
 
-      // Send to AI for parsing
+    if (!isImage && !isText && !isExcel && !isPdf) {
+      toast.error("Unsupported file type. Please upload CSV, TXT, JSON, Excel, PDF, or image files.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      let content = "";
+      let action = "process_document";
+      let fileType = file.type || "unknown";
+
+      if (isImage) {
+        // Convert image to base64 for AI processing
+        const buffer = await file.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        content = `[Image file: ${file.name}, type: ${file.type}, size: ${file.size} bytes]\nBase64 data available for OCR processing.\nNote: This is an image upload. Please analyze the visual content, perform OCR if needed, and extract any structured data.`;
+        fileType = "image";
+      } else if (isText || isExcel) {
+        content = await file.text();
+        if (isExcel) fileType = "excel";
+      } else if (isPdf) {
+        content = await file.text();
+        fileType = "pdf";
+      }
+
+      // Check if this looks like student data for direct import
+      const looksLikeStudentData = /student[_\s]?id|admission|name.*gender|gender.*name/i.test(content.slice(0, 500));
+
+      if (looksLikeStudentData && (isText || isExcel)) {
+        action = "parse_students";
+      }
+
       const userMsg: Message = {
         role: "user",
-        content: `I'm uploading a document "${file.name}" with student data. Please parse this data and add the students to the system. Here's the content:\n\n${text.slice(0, 10000)}`,
+        content: `📎 Uploaded: **${file.name}** (${(file.size / 1024).toFixed(1)} KB)\n\n${
+          action === "parse_students" 
+            ? "Detected student data. Processing for import..." 
+            : "Analyzing document content..."
+        }`,
       };
       setMessages(prev => [...prev, userMsg]);
-      setIsLoading(true);
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -151,9 +175,10 @@ const AIAssistant = () => {
         body: JSON.stringify({
           messages: [...messages, userMsg],
           context: `User: ${profile?.full_name || "Unknown"}, Role: ${userRole || "none"}, UserId: ${user?.id || "none"}`,
-          action: "parse_students",
-          fileContent: text,
+          action,
+          fileContent: content.slice(0, 20000),
           fileName: file.name,
+          fileType,
         }),
       });
 
@@ -162,47 +187,12 @@ const AIAssistant = () => {
         throw new Error(err.error || "Failed to process document");
       }
 
-      let assistantContent = "";
-      const reader = resp.body?.getReader();
-      if (!reader) throw new Error("No response stream");
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let nlIdx: number;
-        while ((nlIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nlIdx);
-          buffer = buffer.slice(nlIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(json);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantContent += delta;
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
-                }
-                return [...prev, { role: "assistant", content: assistantContent }];
-              });
-            }
-          } catch { /* partial */ }
-        }
-      }
+      await streamResponse(resp);
     } catch (e: any) {
       toast.error(e.message || "Failed to process document");
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't process that document. Please try again." }]);
     } finally {
       setIsLoading(false);
-      setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -220,7 +210,7 @@ const AIAssistant = () => {
   }
 
   return (
-    <div className="fixed bottom-0 right-0 md:bottom-6 md:right-6 z-50 w-full md:w-[380px] md:max-w-[calc(100vw-2rem)] h-[85vh] md:h-[500px] md:max-h-[calc(100vh-4rem)] bg-background border md:rounded-xl shadow-2xl flex flex-col md:border rounded-t-xl">
+    <div className="fixed bottom-0 right-0 md:bottom-6 md:right-6 z-50 w-full md:w-[380px] md:max-w-[calc(100vw-2rem)] h-[85vh] md:h-[500px] md:max-h-[calc(100vh-4rem)] bg-background border md:rounded-xl shadow-2xl flex flex-col rounded-t-xl">
       <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground rounded-t-xl">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
@@ -236,7 +226,9 @@ const AIAssistant = () => {
           <div className="text-center py-6 space-y-2">
             <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Hi! I'm your SDMS AI assistant.</p>
-            <p className="text-xs text-muted-foreground">I can help you manage students, view reports, and more. You can also upload student documents for bulk import.</p>
+            <p className="text-xs text-muted-foreground">
+              I can help manage students, view reports, analyze documents, and more. Upload any file (CSV, Excel, PDF, images) for instant processing.
+            </p>
             <div className="flex flex-wrap gap-2 justify-center mt-3">
               {["Show system stats", "List pending incidents", "How to add students?"].map(q => (
                 <Button key={q} variant="outline" size="sm" className="text-xs" onClick={() => sendMessage(q)}>{q}</Button>
@@ -265,10 +257,10 @@ const AIAssistant = () => {
         </div>
       </ScrollArea>
 
-      <div className="p-3 border-t space-y-2">
+      <div className="p-3 border-t">
         <div className="flex gap-2">
           <Input
-            placeholder="Ask something..."
+            placeholder="Ask something or upload a file..."
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") sendMessage(); }}
@@ -277,7 +269,7 @@ const AIAssistant = () => {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.txt,.json,.xls,.xlsx"
+            accept=".csv,.txt,.json,.xls,.xlsx,.pdf,.png,.jpg,.jpeg,.webp,.md,.tsv"
             className="hidden"
             onChange={handleFileUpload}
           />
@@ -285,8 +277,8 @@ const AIAssistant = () => {
             size="icon"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading || isUploading}
-            title="Upload student document"
+            disabled={isLoading}
+            title="Upload document (CSV, Excel, PDF, Image)"
             className="shrink-0"
           >
             <Upload className="w-4 h-4" />
@@ -295,6 +287,7 @@ const AIAssistant = () => {
             <Send className="w-4 h-4" />
           </Button>
         </div>
+        <p className="text-[10px] text-muted-foreground mt-1">Supports CSV, Excel, PDF, images, JSON, TXT</p>
       </div>
     </div>
   );

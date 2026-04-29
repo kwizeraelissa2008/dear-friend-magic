@@ -84,6 +84,44 @@ function detectActionIntent(msg: string): boolean {
   return actionKeywords.some(kw => msg.includes(kw));
 }
 
+// Role-based action permissions — mirror SDMS RLS rules
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  principal: [
+    "insert_event", "update_event", "delete_event",
+    "insert_notification",
+  ],
+  dod: [
+    "update_incident", "update_marks",
+    "insert_permission", "update_permission",
+    "insert_notification",
+  ],
+  dos: [
+    "insert_student", "update_student", "delete_student", "bulk_insert_students",
+    "insert_class", "update_class", "delete_class",
+    "update_marks",
+    "insert_notification",
+  ],
+  teacher: [
+    "insert_incident",
+    "insert_notification",
+  ],
+  discipline_staff: [
+    "insert_incident",
+    "insert_notification",
+  ],
+};
+
+function extractRole(context: string): string | null {
+  const m = context?.match(/Role:\s*([a-z_]+)/i);
+  const role = m?.[1]?.toLowerCase();
+  return role && role !== "none" ? role : null;
+}
+
+function isActionAllowed(role: string | null, action: string): boolean {
+  if (!role) return false;
+  return (ROLE_PERMISSIONS[role] || []).includes(action);
+}
+
 async function handleExecuteAction(
   messages: any[],
   context: string,

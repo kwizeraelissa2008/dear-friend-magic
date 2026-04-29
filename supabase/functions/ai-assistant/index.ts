@@ -129,30 +129,28 @@ async function handleExecuteAction(
   supabase: any
 ): Promise<Response> {
   const systemData = await fetchSystemData(supabase);
+  const role = extractRole(context);
+  const allowedActions = role ? (ROLE_PERMISSIONS[role] || []) : [];
 
   // Get class list for context
   const { data: classes } = await supabase.from("classes").select("id, name, grade_level");
   const classInfo = classes?.map((c: any) => `${c.name} (id: ${c.id}, grade: ${c.grade_level || 'N/A'})`).join(", ") || "None";
 
-  const actionPrompt = `You are an AI that executes database actions for the SDMS. Based on the conversation, determine the EXACT action to perform and return a JSON object.
+  const actionPrompt = `You are an AI agent that executes database actions for the SDMS at Ecole des Sciences Byimana. Based on the conversation, determine the EXACT action to perform and return a JSON object.
 
-AVAILABLE ACTIONS:
-1. insert_student - Add a new student
-2. update_student - Update student fields  
-3. delete_student - Remove a student
-4. insert_class - Create a new class
-5. update_class - Update class fields
-6. delete_class - Remove a class
-7. insert_incident - Report an incident
-8. update_incident - Update incident (approve/reject/modify)
-9. insert_permission - Grant a permission
-10. update_permission - Update permission status
-11. insert_event - Create an event
-12. update_event - Update event details
-13. delete_event - Remove an event
-14. update_marks - Update student marks
-15. insert_notification - Send a notification
-16. bulk_insert_students - Add multiple students
+THE CURRENT USER'S ROLE IS: ${role || "unknown"}
+ACTIONS THIS USER IS ALLOWED TO PERFORM: ${allowedActions.length ? allowedActions.join(", ") : "(none — read-only)"}
+
+You MUST refuse any action not in the allowed list above by returning { "action": "none", "message": "Your role (${role}) is not permitted to perform that action." }
+
+ALL POSSIBLE ACTIONS (only use those allowed for this role):
+- insert_student, update_student, delete_student, bulk_insert_students
+- insert_class, update_class, delete_class
+- insert_incident, update_incident
+- insert_permission, update_permission
+- insert_event, update_event, delete_event
+- update_marks
+- insert_notification
 
 CURRENT SYSTEM DATA:
 ${systemData}
@@ -161,7 +159,7 @@ Available classes: ${classInfo}
 Current context: ${context}
 
 RULES:
-- Return ONLY valid JSON with the structure: { "action": "action_name", "data": {...}, "description": "what you did" }
+- Return ONLY valid JSON: { "action": "action_name", "data": {...}, "description": "what you did" }
 - For bulk_insert_students, data should be { "students": [...] }
 - For updates, include { "id": "uuid", "updates": {...} }
 - For deletes, include { "id": "uuid" } or { "identifier": "student_id_value" }
@@ -171,7 +169,7 @@ RULES:
 - severity must be: minor, moderate, serious, severe, critical
 - status for incidents: pending, approved, rejected
 - If you cannot determine the action, return { "action": "none", "message": "explain what info is missing" }
-- NEVER make up UUIDs for existing records. If you need to find a record, return a search action first.`;
+- NEVER make up UUIDs for existing records.`;
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",

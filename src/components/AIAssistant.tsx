@@ -234,7 +234,10 @@ const AIAssistant = () => {
       <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground rounded-t-xl">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
-          <span className="font-semibold text-sm">SDMS AI Assistant</span>
+          <div className="flex flex-col leading-tight">
+            <span className="font-semibold text-sm">{roleHint.title}</span>
+            <span className="text-[10px] opacity-80">{profile?.full_name}</span>
+          </div>
         </div>
         <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)}>
           <X className="w-4 h-4" />
@@ -245,12 +248,12 @@ const AIAssistant = () => {
         {messages.length === 0 && (
           <div className="text-center py-6 space-y-2">
             <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Hi! I'm your SDMS AI assistant.</p>
+            <p className="text-sm text-muted-foreground">Hi {profile?.full_name?.split(" ")[0] || "there"}! I'm your <strong>{roleHint.title}</strong>.</p>
             <p className="text-xs text-muted-foreground">
-              I can help manage students, view reports, analyze documents, and more. Upload any file (CSV, Excel, PDF, images) for instant processing.
+              I can only perform actions allowed for your role ({userRole}). Ask me anything or upload a document.
             </p>
             <div className="flex flex-wrap gap-2 justify-center mt-3">
-              {["Show system stats", "List pending incidents", "How to add students?"].map(q => (
+              {roleHint.suggestions.map(q => (
                 <Button key={q} variant="outline" size="sm" className="text-xs" onClick={() => sendMessage(q)}>{q}</Button>
               ))}
             </div>

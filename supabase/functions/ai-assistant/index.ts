@@ -84,6 +84,44 @@ function detectActionIntent(msg: string): boolean {
   return actionKeywords.some(kw => msg.includes(kw));
 }
 
+// Role-based action permissions — mirror SDMS RLS rules
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  principal: [
+    "insert_event", "update_event", "delete_event",
+    "insert_notification",
+  ],
+  dod: [
+    "update_incident", "update_marks",
+    "insert_permission", "update_permission",
+    "insert_notification",
+  ],
+  dos: [
+    "insert_student", "update_student", "delete_student", "bulk_insert_students",
+    "insert_class", "update_class", "delete_class",
+    "update_marks",
+    "insert_notification",
+  ],
+  teacher: [
+    "insert_incident",
+    "insert_notification",
+  ],
+  discipline_staff: [
+    "insert_incident",
+    "insert_notification",
+  ],
+};
+
+function extractRole(context: string): string | null {
+  const m = context?.match(/Role:\s*([a-z_]+)/i);
+  const role = m?.[1]?.toLowerCase();
+  return role && role !== "none" ? role : null;
+}
+
+function isActionAllowed(role: string | null, action: string): boolean {
+  if (!role) return false;
+  return (ROLE_PERMISSIONS[role] || []).includes(action);
+}
+
 async function handleExecuteAction(
   messages: any[],
   context: string,
@@ -91,30 +129,28 @@ async function handleExecuteAction(
   supabase: any
 ): Promise<Response> {
   const systemData = await fetchSystemData(supabase);
+  const role = extractRole(context);
+  const allowedActions = role ? (ROLE_PERMISSIONS[role] || []) : [];
 
   // Get class list for context
   const { data: classes } = await supabase.from("classes").select("id, name, grade_level");
   const classInfo = classes?.map((c: any) => `${c.name} (id: ${c.id}, grade: ${c.grade_level || 'N/A'})`).join(", ") || "None";
 
-  const actionPrompt = `You are an AI that executes database actions for the SDMS. Based on the conversation, determine the EXACT action to perform and return a JSON object.
+  const actionPrompt = `You are an AI agent that executes database actions for the SDMS at Ecole des Sciences Byimana. Based on the conversation, determine the EXACT action to perform and return a JSON object.
 
-AVAILABLE ACTIONS:
-1. insert_student - Add a new student
-2. update_student - Update student fields  
-3. delete_student - Remove a student
-4. insert_class - Create a new class
-5. update_class - Update class fields
-6. delete_class - Remove a class
-7. insert_incident - Report an incident
-8. update_incident - Update incident (approve/reject/modify)
-9. insert_permission - Grant a permission
-10. update_permission - Update permission status
-11. insert_event - Create an event
-12. update_event - Update event details
-13. delete_event - Remove an event
-14. update_marks - Update student marks
-15. insert_notification - Send a notification
-16. bulk_insert_students - Add multiple students
+THE CURRENT USER'S ROLE IS: ${role || "unknown"}
+ACTIONS THIS USER IS ALLOWED TO PERFORM: ${allowedActions.length ? allowedActions.join(", ") : "(none — read-only)"}
+
+You MUST refuse any action not in the allowed list above by returning { "action": "none", "message": "Your role (${role}) is not permitted to perform that action." }
+
+ALL POSSIBLE ACTIONS (only use those allowed for this role):
+- insert_student, update_student, delete_student, bulk_insert_students
+- insert_class, update_class, delete_class
+- insert_incident, update_incident
+- insert_permission, update_permission
+- insert_event, update_event, delete_event
+- update_marks
+- insert_notification
 
 CURRENT SYSTEM DATA:
 ${systemData}
@@ -123,7 +159,7 @@ Available classes: ${classInfo}
 Current context: ${context}
 
 RULES:
-- Return ONLY valid JSON with the structure: { "action": "action_name", "data": {...}, "description": "what you did" }
+- Return ONLY valid JSON: { "action": "action_name", "data": {...}, "description": "what you did" }
 - For bulk_insert_students, data should be { "students": [...] }
 - For updates, include { "id": "uuid", "updates": {...} }
 - For deletes, include { "id": "uuid" } or { "identifier": "student_id_value" }
@@ -133,7 +169,7 @@ RULES:
 - severity must be: minor, moderate, serious, severe, critical
 - status for incidents: pending, approved, rejected
 - If you cannot determine the action, return { "action": "none", "message": "explain what info is missing" }
-- NEVER make up UUIDs for existing records. If you need to find a record, return a search action first.`;
+- NEVER make up UUIDs for existing records.`;
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -170,6 +206,11 @@ RULES:
 
   if (actionPlan.action === "none") {
     return streamText(actionPlan.message || "I need more information to complete this action. Please provide specific details.");
+  }
+
+  // Server-side role enforcement (defense-in-depth)
+  if (!isActionAllowed(role, actionPlan.action)) {
+    return streamText(`🚫 **Permission denied.** Your role (${role || "unknown"}) is not allowed to perform \`${actionPlan.action}\`. Please contact the Principal if you need additional access.`);
   }
 
   // Execute the action
@@ -431,43 +472,38 @@ LIVE SYSTEM DATA:
 }
 
 function buildSystemPrompt(systemData: string, context: string): string {
-  return `You are SDMS Assistant, a powerful AI helper for the School Discipline Management System at Ecole des Sciences Byimana. You have FULL READ AND WRITE ACCESS to the system and can help staff with:
+  const role = extractRole(context);
+  const allowed = role ? (ROLE_PERMISSIONS[role] || []) : [];
+  const roleDescriptions: Record<string, string> = {
+    principal: "Approve user accounts, assign roles, manage events, oversee analytics.",
+    dod: "Review and approve incidents, deduct/restore marks, grant student permissions.",
+    dos: "Manage students and classes (create, update, delete), update marks.",
+    teacher: "Report new incidents involving students.",
+    discipline_staff: "Report new incidents involving students.",
+  };
 
-- Viewing and modifying real-time data (students, incidents, classes, permissions, events)
-- Adding, updating, and deleting students directly
-- Creating and managing classes
-- Reporting and approving/rejecting incidents
-- Granting and revoking permissions
-- Creating and managing events
-- Updating student marks (deductions and restorations)
-- Sending notifications to users
-- Processing uploaded documents and importing data
-- Providing data-driven insights and recommendations
+  return `You are SDMS Agent, a role-restricted AI assistant for Ecole des Sciences Byimana's School Discipline Management System.
+
+CURRENT USER ROLE: ${role || "unknown"}
+ROLE RESPONSIBILITIES: ${role ? roleDescriptions[role] : "Read-only browsing."}
+ACTIONS YOU MAY EXECUTE FOR THIS USER: ${allowed.length ? allowed.join(", ") : "(none — read-only access)"}
+
+CRITICAL ROLE RULES:
+- You may ONLY execute actions in the allowed list above.
+- If the user asks for something outside their role, politely refuse and tell them which role is required.
+- All authenticated users may READ data — explain and summarize freely.
+- Never claim to have done an action you did not perform.
 
 ${systemData}
 
-Current user context: ${context}
+User context: ${context}
 
-ACTION CAPABILITIES:
-You can directly modify the system. When users ask you to add, update, delete, or modify any data, DO IT directly.
-Examples of what you can do:
-- "Add student John Doe, ID S001, Male, born 2008-05-15" → adds the student
-- "Delete student S003" → removes them
-- "Create class Senior 3A, grade S3" → creates the class
-- "Report minor incident for S001: late to class" → creates the incident
-- "Deduct 5 marks from S001 for misconduct" → updates marks
-- "Grant permission for S001: medical leave until 2026-04-20" → creates permission
-- "Schedule event: Sports Day on 2026-05-01" → creates event
-
-RULES:
-- Keep responses concise and actionable
-- Use the real data provided to give specific answers
-- When asked about stats, reference the actual numbers
-- Be professional and supportive
-- Execute modification requests directly - don't just explain how to do it in the UI
-- After performing an action, confirm what was done
-- Never hallucinate data
-- Clearly separate extracted vs inferred data`;
+GUIDELINES:
+- Keep responses concise and actionable.
+- Reference real numbers from the live system data above.
+- After performing an action, confirm exactly what was done.
+- Never hallucinate data or invent IDs.
+- Be professional, supportive, and proactive — suggest the next logical step within the user's role.`;
 }
 
 async function handleDocumentProcess(

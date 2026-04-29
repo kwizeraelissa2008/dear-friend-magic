@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,8 +14,18 @@ interface Message {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
 
+// Role-based capability hints shown in the empty state
+const ROLE_HINTS: Record<string, { title: string; suggestions: string[] }> = {
+  principal: { title: "Principal Agent", suggestions: ["Show pending user approvals", "List recent incidents", "Schedule a new event"] },
+  dod: { title: "Dean of Discipline Agent", suggestions: ["List pending incidents", "Grant permission to a student", "Approve incident"] },
+  dos: { title: "Director of Studies Agent", suggestions: ["Add a new student", "Create a new class", "Show class list"] },
+  teacher: { title: "Teacher Agent", suggestions: ["Report a minor incident", "Show my recent reports", "Find a student"] },
+  discipline_staff: { title: "Discipline Staff Agent", suggestions: ["Report an incident", "Find a student", "Show pending incidents"] },
+};
+
 const AIAssistant = () => {
-  const { profile, userRole, user } = useAuth();
+  const { profile, userRole, user, isLoading: authLoading } = useAuth();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -197,12 +208,21 @@ const AIAssistant = () => {
     }
   };
 
+  // Hide assistant when not logged in or on auth/reset routes
+  const hiddenRoutes = ["/auth", "/reset-password"];
+  if (authLoading || !user || !userRole || hiddenRoutes.includes(location.pathname)) {
+    return null;
+  }
+
+  const roleHint = ROLE_HINTS[userRole] || { title: "SDMS Agent", suggestions: ["Show system stats", "How can you help me?"] };
+
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 z-50 rounded-full w-12 h-12 md:w-14 md:h-14 shadow-lg"
         size="icon"
+        title={`${roleHint.title} — click to open`}
       >
         <Bot className="w-5 h-5 md:w-6 md:h-6" />
       </Button>
@@ -214,7 +234,10 @@ const AIAssistant = () => {
       <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground rounded-t-xl">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
-          <span className="font-semibold text-sm">SDMS AI Assistant</span>
+          <div className="flex flex-col leading-tight">
+            <span className="font-semibold text-sm">{roleHint.title}</span>
+            <span className="text-[10px] opacity-80">{profile?.full_name}</span>
+          </div>
         </div>
         <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)}>
           <X className="w-4 h-4" />
@@ -225,12 +248,12 @@ const AIAssistant = () => {
         {messages.length === 0 && (
           <div className="text-center py-6 space-y-2">
             <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Hi! I'm your SDMS AI assistant.</p>
+            <p className="text-sm text-muted-foreground">Hi {profile?.full_name?.split(" ")[0] || "there"}! I'm your <strong>{roleHint.title}</strong>.</p>
             <p className="text-xs text-muted-foreground">
-              I can help manage students, view reports, analyze documents, and more. Upload any file (CSV, Excel, PDF, images) for instant processing.
+              I can only perform actions allowed for your role ({userRole}). Ask me anything or upload a document.
             </p>
             <div className="flex flex-wrap gap-2 justify-center mt-3">
-              {["Show system stats", "List pending incidents", "How to add students?"].map(q => (
+              {roleHint.suggestions.map(q => (
                 <Button key={q} variant="outline" size="sm" className="text-xs" onClick={() => sendMessage(q)}>{q}</Button>
               ))}
             </div>

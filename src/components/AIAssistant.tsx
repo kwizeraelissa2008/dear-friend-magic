@@ -27,6 +27,7 @@ const ROLE_HINTS: Record<string, { title: string; suggestions: string[] }> = {
 const AIAssistant = () => {
   const { profile, userRole, user, isLoading: authLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

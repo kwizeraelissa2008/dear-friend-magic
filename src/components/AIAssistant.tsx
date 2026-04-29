@@ -208,12 +208,21 @@ const AIAssistant = () => {
     }
   };
 
+  // Hide assistant when not logged in or on auth/reset routes
+  const hiddenRoutes = ["/auth", "/reset-password"];
+  if (authLoading || !user || !userRole || hiddenRoutes.includes(location.pathname)) {
+    return null;
+  }
+
+  const roleHint = ROLE_HINTS[userRole] || { title: "SDMS Agent", suggestions: ["Show system stats", "How can you help me?"] };
+
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 z-50 rounded-full w-12 h-12 md:w-14 md:h-14 shadow-lg"
         size="icon"
+        title={`${roleHint.title} — click to open`}
       >
         <Bot className="w-5 h-5 md:w-6 md:h-6" />
       </Button>

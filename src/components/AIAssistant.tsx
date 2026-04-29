@@ -39,6 +39,8 @@ const AIAssistant = () => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const stripNavMarker = (s: string) => s.replace(NAV_MARKER, "").trimEnd();
+
   const streamResponse = async (resp: Response) => {
     let assistantContent = "";
     const reader = resp.body?.getReader();
@@ -64,18 +66,37 @@ const AIAssistant = () => {
           const delta = parsed.choices?.[0]?.delta?.content;
           if (delta) {
             assistantContent += delta;
-            const content = assistantContent;
+            // Hide the navigation marker from UI while streaming
+            const display = stripNavMarker(assistantContent);
             setMessages(prev => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {
-                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
+                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: display } : m);
               }
-              return [...prev, { role: "assistant", content }];
+              return [...prev, { role: "assistant", content: display }];
             });
           }
         } catch { /* partial */ }
       }
     }
+
+    // Parse navigation instructions and execute
+    const navMatch = assistantContent.match(NAV_MARKER);
+    if (navMatch) {
+      try {
+        const steps: { path: string; description: string }[] = JSON.parse(navMatch[1]);
+        for (const step of steps) {
+          if (typeof step?.path === "string" && step.path.startsWith("/")) {
+            await new Promise(r => setTimeout(r, 400));
+            navigate(step.path);
+            toast.success(`Navigated to ${step.path}`);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse navigation steps", e);
+      }
+    }
+
     return assistantContent;
   };
 

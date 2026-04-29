@@ -208,6 +208,11 @@ RULES:
     return streamText(actionPlan.message || "I need more information to complete this action. Please provide specific details.");
   }
 
+  // Server-side role enforcement (defense-in-depth)
+  if (!isActionAllowed(role, actionPlan.action)) {
+    return streamText(`🚫 **Permission denied.** Your role (${role || "unknown"}) is not allowed to perform \`${actionPlan.action}\`. Please contact the Principal if you need additional access.`);
+  }
+
   // Execute the action
   const execResult = await executeAction(actionPlan, supabase);
   return streamText(execResult);

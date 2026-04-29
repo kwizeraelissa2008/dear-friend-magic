@@ -80,6 +80,13 @@ function detectActionIntent(msg: string): boolean {
     "create event", "add event", "schedule event", "delete event",
     "update marks", "deduct marks", "restore marks", "set marks",
     "add notification", "send notification", "notify",
+    // Navigation intents
+    "go to", "open ", "take me to", "navigate to", "show me the", "show the page",
+    "show students", "show incidents", "show analytics", "show reports",
+    "show calendar", "show notifications", "show audit", "show chat",
+    "open dashboard", "open sis", "open analytics", "open reports",
+    // Multi-step trigger
+    " and then ", " then ",
   ];
   return actionKeywords.some(kw => msg.includes(kw));
 }
@@ -136,14 +143,14 @@ async function handleExecuteAction(
   const { data: classes } = await supabase.from("classes").select("id, name, grade_level");
   const classInfo = classes?.map((c: any) => `${c.name} (id: ${c.id}, grade: ${c.grade_level || 'N/A'})`).join(", ") || "None";
 
-  const actionPrompt = `You are an AI agent that executes database actions for the SDMS at Ecole des Sciences Byimana. Based on the conversation, determine the EXACT action to perform and return a JSON object.
+  const actionPrompt = `You are an autonomous AI agent for the SDMS at Ecole des Sciences Byimana. You take ACTION inside the app — not just respond with text.
+
+You produce a PLAN: an ordered list of one or more steps to fulfill the user's instruction. Steps execute in order.
 
 THE CURRENT USER'S ROLE IS: ${role || "unknown"}
-ACTIONS THIS USER IS ALLOWED TO PERFORM: ${allowedActions.length ? allowedActions.join(", ") : "(none — read-only)"}
+DATABASE ACTIONS THIS USER MAY PERFORM: ${allowedActions.length ? allowedActions.join(", ") : "(none — read-only)"}
 
-You MUST refuse any action not in the allowed list above by returning { "action": "none", "message": "Your role (${role}) is not permitted to perform that action." }
-
-ALL POSSIBLE ACTIONS (only use those allowed for this role):
+DATABASE ACTIONS (require role permission):
 - insert_student, update_student, delete_student, bulk_insert_students
 - insert_class, update_class, delete_class
 - insert_incident, update_incident
@@ -152,24 +159,37 @@ ALL POSSIBLE ACTIONS (only use those allowed for this role):
 - update_marks
 - insert_notification
 
+NAVIGATION ACTION (always allowed, executes in the browser):
+- navigate — moves the user to a page in the app. data: { "path": "/route" }
+  Available routes: "/" (Dashboard), "/sis" (Students), "/report" (Report Incident), "/reports" (Reports list),
+  "/notifications", "/calendar", "/analytics", "/audit-logs", "/user-management" (Principal),
+  "/chat", "/about"
+
 CURRENT SYSTEM DATA:
 ${systemData}
 Available classes: ${classInfo}
 
-Current context: ${context}
+User context: ${context}
+
+OUTPUT FORMAT — return ONLY valid JSON:
+{
+  "plan": [
+    { "action": "action_name", "data": {...}, "description": "human summary of this step" },
+    ...
+  ],
+  "summary": "one-sentence overview of what you will do"
+}
 
 RULES:
-- Return ONLY valid JSON: { "action": "action_name", "data": {...}, "description": "what you did" }
-- For bulk_insert_students, data should be { "students": [...] }
-- For updates, include { "id": "uuid", "updates": {...} }
-- For deletes, include { "id": "uuid" } or { "identifier": "student_id_value" }
-- Use real class IDs from the list above
-- Gender must be "Male", "Female", or "Other"
-- date_of_birth format: YYYY-MM-DD
-- severity must be: minor, moderate, serious, severe, critical
-- status for incidents: pending, approved, rejected
-- If you cannot determine the action, return { "action": "none", "message": "explain what info is missing" }
-- NEVER make up UUIDs for existing records.`;
+- For SINGLE-step requests, still wrap in a "plan" array of length 1.
+- For multi-step requests like "add student X then take me to SIS", produce one step per action in order.
+- After a database action, if the user's intent implies viewing the result, append a "navigate" step.
+- For updates, include { "id": "uuid", "updates": {...} } or { "identifier": "student_id_value", "updates": {...} }.
+- For deletes, include { "id": "uuid" } or { "identifier": "student_id_value" }.
+- Use real class IDs from the list above. Gender = "Male"|"Female"|"Other". DOB = YYYY-MM-DD. Severity = minor|moderate|serious|severe|critical.
+- If a database step is not in the user's allowed list, omit it and use { "plan": [], "summary": "Permission denied: <action> requires <role>." }
+- If you cannot determine the action, return { "plan": [], "summary": "explain what info is missing" }
+- NEVER invent UUIDs.`;
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -181,7 +201,7 @@ RULES:
       model: "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: actionPrompt },
-        ...messages.slice(-5),
+        ...messages.slice(-8), // session memory: last 8 turns
       ],
     }),
   });
@@ -197,25 +217,63 @@ RULES:
   if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
   jsonStr = jsonStr.trim();
 
-  let actionPlan: any;
+  let parsed: any;
   try {
-    actionPlan = JSON.parse(jsonStr);
+    parsed = JSON.parse(jsonStr);
   } catch {
-    return streamText(`I understood your request but couldn't determine the exact action. Could you please be more specific? For example:\n- "Add student John Doe, ID: S001, Male, born 2008-05-15 to Senior 1A"\n- "Create a new class Senior 2B, grade S2"\n- "Report minor incident for student S001: late to class"`);
+    return streamText(`I understood your request but couldn't build a clear plan. Try being more specific, e.g.:\n- "Add student John Doe, ID S001, Male, born 2008-05-15 then open SIS"\n- "Create class Senior 2B grade S2"\n- "Open the analytics page"`);
   }
 
-  if (actionPlan.action === "none") {
-    return streamText(actionPlan.message || "I need more information to complete this action. Please provide specific details.");
+  // Backward compatibility: single action shape
+  let plan: any[] = Array.isArray(parsed.plan) ? parsed.plan : (parsed.action ? [parsed] : []);
+  const summary: string = parsed.summary || "";
+
+  if (!plan.length) {
+    return streamText(summary || "I need more information to complete this. Please provide specific details.");
   }
 
-  // Server-side role enforcement (defense-in-depth)
-  if (!isActionAllowed(role, actionPlan.action)) {
-    return streamText(`🚫 **Permission denied.** Your role (${role || "unknown"}) is not allowed to perform \`${actionPlan.action}\`. Please contact the Principal if you need additional access.`);
+  // Execute steps sequentially
+  const navigateSteps: { path: string; description: string }[] = [];
+  const stepResults: string[] = [];
+  let stepNum = 1;
+
+  for (const step of plan) {
+    const act = step?.action;
+    if (!act) continue;
+
+    // Navigation step → defer to client
+    if (act === "navigate") {
+      const path = step?.data?.path;
+      if (typeof path === "string" && path.startsWith("/")) {
+        navigateSteps.push({ path, description: step.description || `Navigate to ${path}` });
+        stepResults.push(`**${stepNum}.** 🧭 Navigating to \`${path}\``);
+      } else {
+        stepResults.push(`**${stepNum}.** ⚠️ Skipped invalid navigation step.`);
+      }
+      stepNum++;
+      continue;
+    }
+
+    // Role enforcement
+    if (!isActionAllowed(role, act)) {
+      stepResults.push(`**${stepNum}.** 🚫 Skipped \`${act}\` — your role (${role || "unknown"}) is not permitted.`);
+      stepNum++;
+      continue;
+    }
+
+    const res = await executeAction(step, supabase);
+    stepResults.push(`**${stepNum}.** ${res}`);
+    stepNum++;
   }
 
-  // Execute the action
-  const execResult = await executeAction(actionPlan, supabase);
-  return streamText(execResult);
+  // Compose confirmation
+  let body = "";
+  if (summary) body += `🤖 **Plan:** ${summary}\n\n`;
+  body += stepResults.join("\n\n");
+  if (navigateSteps.length) {
+    body += `\n\n<<NAVIGATE:${JSON.stringify(navigateSteps)}>>`;
+  }
+  return streamText(body);
 }
 
 async function executeAction(plan: any, supabase: any): Promise<string> {

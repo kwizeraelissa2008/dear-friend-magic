@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +13,7 @@ interface Message {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+const NAV_MARKER = /<<NAVIGATE:(\[[\s\S]*?\])>>/;
 
 // Role-based capability hints shown in the empty state
 const ROLE_HINTS: Record<string, { title: string; suggestions: string[] }> = {
@@ -26,6 +27,7 @@ const ROLE_HINTS: Record<string, { title: string; suggestions: string[] }> = {
 const AIAssistant = () => {
   const { profile, userRole, user, isLoading: authLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -36,6 +38,8 @@ const AIAssistant = () => {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const stripNavMarker = (s: string) => s.replace(NAV_MARKER, "").trimEnd();
 
   const streamResponse = async (resp: Response) => {
     let assistantContent = "";
@@ -62,18 +66,37 @@ const AIAssistant = () => {
           const delta = parsed.choices?.[0]?.delta?.content;
           if (delta) {
             assistantContent += delta;
-            const content = assistantContent;
+            // Hide the navigation marker from UI while streaming
+            const display = stripNavMarker(assistantContent);
             setMessages(prev => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {
-                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
+                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: display } : m);
               }
-              return [...prev, { role: "assistant", content }];
+              return [...prev, { role: "assistant", content: display }];
             });
           }
         } catch { /* partial */ }
       }
     }
+
+    // Parse navigation instructions and execute
+    const navMatch = assistantContent.match(NAV_MARKER);
+    if (navMatch) {
+      try {
+        const steps: { path: string; description: string }[] = JSON.parse(navMatch[1]);
+        for (const step of steps) {
+          if (typeof step?.path === "string" && step.path.startsWith("/")) {
+            await new Promise(r => setTimeout(r, 400));
+            navigate(step.path);
+            toast.success(`Navigated to ${step.path}`);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse navigation steps", e);
+      }
+    }
+
     return assistantContent;
   };
 

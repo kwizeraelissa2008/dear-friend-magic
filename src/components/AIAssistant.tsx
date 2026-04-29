@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,8 +14,18 @@ interface Message {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
 
+// Role-based capability hints shown in the empty state
+const ROLE_HINTS: Record<string, { title: string; suggestions: string[] }> = {
+  principal: { title: "Principal Agent", suggestions: ["Show pending user approvals", "List recent incidents", "Schedule a new event"] },
+  dod: { title: "Dean of Discipline Agent", suggestions: ["List pending incidents", "Grant permission to a student", "Approve incident"] },
+  dos: { title: "Director of Studies Agent", suggestions: ["Add a new student", "Create a new class", "Show class list"] },
+  teacher: { title: "Teacher Agent", suggestions: ["Report a minor incident", "Show my recent reports", "Find a student"] },
+  discipline_staff: { title: "Discipline Staff Agent", suggestions: ["Report an incident", "Find a student", "Show pending incidents"] },
+};
+
 const AIAssistant = () => {
-  const { profile, userRole, user } = useAuth();
+  const { profile, userRole, user, isLoading: authLoading } = useAuth();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

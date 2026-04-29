@@ -80,6 +80,13 @@ function detectActionIntent(msg: string): boolean {
     "create event", "add event", "schedule event", "delete event",
     "update marks", "deduct marks", "restore marks", "set marks",
     "add notification", "send notification", "notify",
+    // Navigation intents
+    "go to", "open ", "take me to", "navigate to", "show me the", "show the page",
+    "show students", "show incidents", "show analytics", "show reports",
+    "show calendar", "show notifications", "show audit", "show chat",
+    "open dashboard", "open sis", "open analytics", "open reports",
+    // Multi-step trigger
+    " and then ", " then ",
   ];
   return actionKeywords.some(kw => msg.includes(kw));
 }

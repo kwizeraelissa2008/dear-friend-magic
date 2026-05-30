@@ -50,12 +50,21 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
 
   const handleManualSubmit = async () => {
-    if (!name || !gender || !dob || !studentId) { toast.error("Please fill all required fields"); return; }
+    const parsed = studentSchema.safeParse({ name, gender, dob, studentId, parentName, parentPhone, photoUrl });
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message || "Please fix form errors");
+      return;
+    }
     setIsLoading(true);
     const { error } = await supabase.from("students").insert({
-      name, gender, date_of_birth: dob, student_id: studentId, class_id: classId,
-      parent_name: parentName || null, parent_phone: parentPhone || null,
-      photo_url: photoUrl || null,
+      name: parsed.data.name,
+      gender: parsed.data.gender,
+      date_of_birth: parsed.data.dob,
+      student_id: parsed.data.studentId,
+      class_id: classId,
+      parent_name: parsed.data.parentName || null,
+      parent_phone: parsed.data.parentPhone || null,
+      photo_url: parsed.data.photoUrl || null,
     });
     if (error) {
       if (error.message.includes("duplicate")) toast.error("A student with this admission number already exists");

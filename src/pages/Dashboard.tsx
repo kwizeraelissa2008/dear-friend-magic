@@ -19,30 +19,43 @@ interface RecentActivity {
 }
 
 const Dashboard = () => {
+  useDocumentTitle("Dashboard");
   const { hasRole, userRole, profile } = useAuth();
   const [stats, setStats] = useState({ totalStudents: 0, pendingIncidents: 0, activePermissions: 0, upcomingEvents: 0 });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => { fetchStats(); fetchActivity(); }, []);
+  useEffect(() => {
+    Promise.all([fetchStats(), fetchActivity()]).finally(() => setIsLoading(false));
+  }, []);
 
   const fetchStats = async () => {
-    const [students, incidents, permissions, events] = await Promise.all([
-      supabase.from("students").select("*", { count: "exact", head: true }),
-      supabase.from("incidents").select("*", { count: "exact", head: true }).eq("status", "pending"),
-      supabase.from("permissions").select("*", { count: "exact", head: true }).eq("status", "active"),
-      supabase.from("events").select("*", { count: "exact", head: true }).gte("event_date", new Date().toISOString().split("T")[0]),
-    ]);
-    setStats({
-      totalStudents: students.count || 0,
-      pendingIncidents: incidents.count || 0,
-      activePermissions: permissions.count || 0,
-      upcomingEvents: events.count || 0,
-    });
+    try {
+      const [students, incidents, permissions, events] = await Promise.all([
+        supabase.from("students").select("*", { count: "exact", head: true }),
+        supabase.from("incidents").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("permissions").select("*", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("events").select("*", { count: "exact", head: true }).gte("event_date", new Date().toISOString().split("T")[0]),
+      ]);
+      setStats({
+        totalStudents: students.count || 0,
+        pendingIncidents: incidents.count || 0,
+        activePermissions: permissions.count || 0,
+        upcomingEvents: events.count || 0,
+      });
+    } catch (err: any) {
+      toast.error("Failed to load dashboard stats");
+    }
   };
 
   const fetchActivity = async () => {
-    const { data } = await supabase.from("audit_logs").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(10);
-    setRecentActivity(data || []);
+    try {
+      const { data, error } = await supabase.from("audit_logs").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(10);
+      if (error) throw error;
+      setRecentActivity(data || []);
+    } catch (err) {
+      // silent — activity is non-critical
+    }
   };
 
   const statCards = [

@@ -168,7 +168,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         )}
       </header>
 
-      <main className="container mx-auto p-4 md:p-6 lg:p-8">{children}</main>
+      <main className="container mx-auto p-4 md:p-6 lg:p-8 pb-24 md:pb-8">{children}</main>
     </div>
   );
 };

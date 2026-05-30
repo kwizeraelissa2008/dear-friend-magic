@@ -7,6 +7,9 @@ import { Users, AlertTriangle, Calendar, FileCheck, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { StatsSkeleton } from "@/components/Skeletons";
+import { toast } from "sonner";
 
 interface RecentActivity {
   id: string;

@@ -61,15 +61,16 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    const parsed = signUpSchema.safeParse({ fullName, email, password });
+    if (!parsed.success) { toast.error(parsed.error.errors[0]?.message); return; }
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
-        email, password,
-        options: { data: { full_name: fullName }, emailRedirectTo: `${window.location.origin}/` },
+        email: parsed.data.email,
+        password: parsed.data.password,
+        options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) throw error;
-      // Update profile with pending status and desired role
       toast.success("Account created! Your account is pending approval by the Principal. Please check your email to verify.");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");

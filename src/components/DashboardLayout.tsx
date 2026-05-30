@@ -87,15 +87,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
+          <Link to="/" className="flex items-center gap-2 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold text-foreground">SDMS</h1>
-              <p className="text-xs text-muted-foreground">School Discipline Management</p>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold text-foreground leading-tight truncate">SDMS</h1>
+              <p className="hidden sm:block text-xs text-muted-foreground truncate">School Discipline Management</p>
             </div>
-          </div>
+          </Link>
 
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map(item => {

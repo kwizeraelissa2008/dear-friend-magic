@@ -71,15 +71,18 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome, {profile?.full_name || "User"}</h1>
-          <p className="text-muted-foreground">
-            {roleLabel && <Badge variant="secondary" className="mr-2">{roleLabel}</Badge>}
-            School Discipline Management System
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {profile?.full_name || "User"}</h1>
+          <p className="text-sm text-muted-foreground flex items-center flex-wrap gap-2 mt-1">
+            {roleLabel && <Badge variant="secondary">{roleLabel}</Badge>}
+            <span>School Discipline Management System</span>
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map(stat => {
+        {isLoading ? (
+          <StatsSkeleton />
+        ) : (
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            {statCards.map(stat => {
             const Icon = stat.icon;
             return (
               <Card key={stat.title} className="hover:shadow-md transition-shadow">

@@ -7,6 +7,9 @@ import { Users, AlertTriangle, Calendar, FileCheck, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { StatsSkeleton } from "@/components/Skeletons";
+import { toast } from "sonner";
 
 interface RecentActivity {
   id: string;
@@ -16,30 +19,43 @@ interface RecentActivity {
 }
 
 const Dashboard = () => {
+  useDocumentTitle("Dashboard");
   const { hasRole, userRole, profile } = useAuth();
   const [stats, setStats] = useState({ totalStudents: 0, pendingIncidents: 0, activePermissions: 0, upcomingEvents: 0 });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => { fetchStats(); fetchActivity(); }, []);
+  useEffect(() => {
+    Promise.all([fetchStats(), fetchActivity()]).finally(() => setIsLoading(false));
+  }, []);
 
   const fetchStats = async () => {
-    const [students, incidents, permissions, events] = await Promise.all([
-      supabase.from("students").select("*", { count: "exact", head: true }),
-      supabase.from("incidents").select("*", { count: "exact", head: true }).eq("status", "pending"),
-      supabase.from("permissions").select("*", { count: "exact", head: true }).eq("status", "active"),
-      supabase.from("events").select("*", { count: "exact", head: true }).gte("event_date", new Date().toISOString().split("T")[0]),
-    ]);
-    setStats({
-      totalStudents: students.count || 0,
-      pendingIncidents: incidents.count || 0,
-      activePermissions: permissions.count || 0,
-      upcomingEvents: events.count || 0,
-    });
+    try {
+      const [students, incidents, permissions, events] = await Promise.all([
+        supabase.from("students").select("*", { count: "exact", head: true }),
+        supabase.from("incidents").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("permissions").select("*", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("events").select("*", { count: "exact", head: true }).gte("event_date", new Date().toISOString().split("T")[0]),
+      ]);
+      setStats({
+        totalStudents: students.count || 0,
+        pendingIncidents: incidents.count || 0,
+        activePermissions: permissions.count || 0,
+        upcomingEvents: events.count || 0,
+      });
+    } catch (err: any) {
+      toast.error("Failed to load dashboard stats");
+    }
   };
 
   const fetchActivity = async () => {
-    const { data } = await supabase.from("audit_logs").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(10);
-    setRecentActivity(data || []);
+    try {
+      const { data, error } = await supabase.from("audit_logs").select("id, action, details, created_at").order("created_at", { ascending: false }).limit(10);
+      if (error) throw error;
+      setRecentActivity(data || []);
+    } catch (err) {
+      // silent — activity is non-critical
+    }
   };
 
   const statCards = [
@@ -55,15 +71,18 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome, {profile?.full_name || "User"}</h1>
-          <p className="text-muted-foreground">
-            {roleLabel && <Badge variant="secondary" className="mr-2">{roleLabel}</Badge>}
-            School Discipline Management System
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {profile?.full_name || "User"}</h1>
+          <p className="text-sm text-muted-foreground flex items-center flex-wrap gap-2 mt-1">
+            {roleLabel && <Badge variant="secondary">{roleLabel}</Badge>}
+            <span>School Discipline Management System</span>
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map(stat => {
+        {isLoading ? (
+          <StatsSkeleton />
+        ) : (
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            {statCards.map(stat => {
             const Icon = stat.icon;
             return (
               <Card key={stat.title} className="hover:shadow-md transition-shadow">
@@ -78,7 +97,10 @@ const Dashboard = () => {
               </Card>
             );
           })}
-        </div>
+          </div>
+        )}
+
+
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>

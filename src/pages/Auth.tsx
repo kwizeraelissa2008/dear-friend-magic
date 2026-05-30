@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 
-// Role selection removed - Principal assigns roles after approval
+const emailSchema = z.string().trim().email("Enter a valid email").max(255);
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72, "Password too long");
+const signUpSchema = z.object({
+  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  email: emailSchema,
+  password: passwordSchema,
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -54,15 +61,16 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    const parsed = signUpSchema.safeParse({ fullName, email, password });
+    if (!parsed.success) { toast.error(parsed.error.errors[0]?.message); return; }
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
-        email, password,
-        options: { data: { full_name: fullName }, emailRedirectTo: `${window.location.origin}/` },
+        email: parsed.data.email,
+        password: parsed.data.password,
+        options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) throw error;
-      // Update profile with pending status and desired role
       toast.success("Account created! Your account is pending approval by the Principal. Please check your email to verify.");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");

@@ -243,7 +243,7 @@ const AIAssistant = () => {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 rounded-full w-12 h-12 md:w-14 md:h-14 shadow-lg"
+        className="fixed bottom-6 right-4 md:bottom-6 md:right-6 z-50 rounded-full w-12 h-12 md:w-14 md:h-14 shadow-lg"
         size="icon"
         title={`${roleHint.title} — click to open`}
       >

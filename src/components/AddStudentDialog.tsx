@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Loader2, Upload, Download, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const studentSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
+  gender: z.enum(["Male", "Female", "Other"], { errorMap: () => ({ message: "Select a gender" }) }),
+  dob: z.string().refine(v => !!v && !isNaN(Date.parse(v)) && new Date(v) < new Date(), "Enter a valid past date"),
+  studentId: z.string().trim().min(1, "Admission number is required").max(50),
+  parentName: z.string().trim().max(100).optional().or(z.literal("")),
+  parentPhone: z.string().trim().regex(/^$|^[+\d\s\-()]{7,20}$/, "Invalid phone number").optional().or(z.literal("")),
+  photoUrl: z.string().trim().url("Must be a valid URL").optional().or(z.literal("")),
+});
 
 interface AddStudentDialogProps {
   classId: string;
@@ -39,12 +50,21 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
 
   const handleManualSubmit = async () => {
-    if (!name || !gender || !dob || !studentId) { toast.error("Please fill all required fields"); return; }
+    const parsed = studentSchema.safeParse({ name, gender, dob, studentId, parentName, parentPhone, photoUrl });
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message || "Please fix form errors");
+      return;
+    }
     setIsLoading(true);
     const { error } = await supabase.from("students").insert({
-      name, gender, date_of_birth: dob, student_id: studentId, class_id: classId,
-      parent_name: parentName || null, parent_phone: parentPhone || null,
-      photo_url: photoUrl || null,
+      name: parsed.data.name,
+      gender: parsed.data.gender,
+      date_of_birth: parsed.data.dob,
+      student_id: parsed.data.studentId,
+      class_id: classId,
+      parent_name: parsed.data.parentName || null,
+      parent_phone: parsed.data.parentPhone || null,
+      photo_url: parsed.data.photoUrl || null,
     });
     if (error) {
       if (error.message.includes("duplicate")) toast.error("A student with this admission number already exists");

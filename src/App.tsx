@@ -19,6 +19,8 @@ import About from "./pages/About";
 import UserManagement from "./pages/UserManagement";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Index";
+import Pending from "./pages/Pending";
 import AIAssistant from "./components/AIAssistant";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -37,10 +39,12 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/pending" element={<Pending />} />
 
-            <Route path="/" element={<Private><Dashboard /></Private>} />
+            <Route path="/dashboard" element={<Private><Dashboard /></Private>} />
             <Route path="/sis" element={<Private><SIS /></Private>} />
             <Route path="/sis/class/:classId" element={<Private><ClassStudents /></Private>} />
             <Route path="/sis/student/:studentId" element={<Private><StudentProfile /></Private>} />

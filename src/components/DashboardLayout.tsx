@@ -66,7 +66,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const roleLabel = userRole ? userRole.replace("_", " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "";
 
   const navItems = [
-    { name: "Home", path: "/", icon: Home },
+    { name: "Home", path: "/dashboard", icon: Home },
     { name: "SIS", path: "/sis", icon: Users },
     ...(hasRole("teacher", "discipline_staff") ? [{ name: "Report", path: "/report", icon: AlertTriangle }] : []),
     { name: "Chat", path: "/chat", icon: MessageSquare },
@@ -87,7 +87,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2 min-w-0">
+          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
               <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>

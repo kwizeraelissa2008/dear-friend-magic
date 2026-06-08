@@ -104,7 +104,7 @@ const IncidentReport = () => {
       });
 
       toast.success("Incident reported successfully!");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to submit report");
     } finally {

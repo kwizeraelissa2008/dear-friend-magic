@@ -37,14 +37,8 @@ const Auth = () => {
 
   const checkStatusAndRedirect = async (userId: string) => {
     const { data: profile } = await supabase.from("profiles").select("status").eq("id", userId).single();
-    if (profile?.status === "pending") {
-      toast.info("Your account is pending approval by the Principal.");
-      await supabase.auth.signOut();
-      return;
-    }
-    if (profile?.status === "rejected") {
-      toast.error("Your account request was rejected.");
-      await supabase.auth.signOut();
+    if (!profile || profile.status === "pending" || profile.status === "rejected") {
+      navigate("/pending");
       return;
     }
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
@@ -55,7 +49,7 @@ const Auth = () => {
       case "principal": navigate("/analytics"); break;
       case "teacher": navigate("/report"); break;
       case "discipline_staff": navigate("/report"); break;
-      default: navigate("/"); break;
+      default: navigate("/dashboard"); break;
     }
   };
 
@@ -68,10 +62,11 @@ const Auth = () => {
       const { error } = await supabase.auth.signUp({
         email: parsed.data.email,
         password: parsed.data.password,
-        options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${window.location.origin}/` },
+        options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${window.location.origin}/pending` },
       });
       if (error) throw error;
-      toast.success("Account created! Your account is pending approval by the Principal. Please check your email to verify.");
+      toast.success("Account created! Your account is pending approval by the Principal.");
+      navigate("/pending");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -86,18 +81,6 @@ const Auth = () => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.user) {
-        // Check approval status
-        const { data: profile } = await supabase.from("profiles").select("status").eq("id", data.user.id).single();
-        if (profile?.status === "pending") {
-          toast.info("Your account is pending approval by the Principal.");
-          await supabase.auth.signOut();
-          return;
-        }
-        if (profile?.status === "rejected") {
-          toast.error("Your account request was rejected.");
-          await supabase.auth.signOut();
-          return;
-        }
         toast.success("Signed in successfully!");
         await checkStatusAndRedirect(data.user.id);
       }

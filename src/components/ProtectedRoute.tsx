@@ -10,12 +10,17 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
-  const { session, userRole, isLoading } = useAuth();
+  const { session, userRole, profile, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !session) navigate("/auth", { replace: true });
-  }, [isLoading, session, navigate]);
+    if (isLoading) return;
+    if (!session) {
+      navigate("/auth", { replace: true });
+    } else if (profile && profile.status && profile.status !== "approved") {
+      navigate("/pending", { replace: true });
+    }
+  }, [isLoading, session, profile, navigate]);
 
   if (isLoading) {
     return (
@@ -26,6 +31,7 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
   }
 
   if (!session) return null;
+  if (profile?.status && profile.status !== "approved") return null;
 
   if (roles && roles.length > 0 && (!userRole || !roles.includes(userRole))) {
     return (
@@ -38,7 +44,7 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
           <p className="text-muted-foreground text-sm">
             You don't have permission to view this page. Contact your Principal if you believe this is a mistake.
           </p>
-          <Button onClick={() => navigate("/")}>Go to Dashboard</Button>
+          <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
         </div>
       </div>
     );

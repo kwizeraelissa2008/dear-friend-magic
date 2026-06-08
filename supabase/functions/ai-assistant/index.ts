@@ -561,7 +561,13 @@ GUIDELINES:
 - Reference real numbers from the live system data above.
 - After performing an action, confirm exactly what was done.
 - Never hallucinate data or invent IDs.
-- Be professional, supportive, and proactive — suggest the next logical step within the user's role.`;
+- Be professional, supportive, and proactive — suggest the next logical step within the user's role.
+
+RESPONSE STYLE (STRICT):
+- Reply in PLAIN TEXT only. Do NOT use markdown.
+- No asterisks for bold/italic (no ** or *), no headings (#), no backticks, no tables.
+- For lists, use simple dashes "- " or numbers "1." on their own line. Nothing else.
+- Write like a clear human message, not formatted documentation.`;
 }
 
 async function handleDocumentProcess(

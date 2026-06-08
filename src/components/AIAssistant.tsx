@@ -41,6 +41,19 @@ const AIAssistant = () => {
 
   const stripNavMarker = (s: string) => s.replace(NAV_MARKER, "").trimEnd();
 
+  // Remove common markdown so the assistant always renders as clean plain text.
+  const stripMarkdown = (s: string) =>
+    s
+      .replace(/```[\s\S]*?```/g, m => m.replace(/```\w*\n?|```/g, ""))
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/(^|\s)\*(?!\s)([^*\n]+?)\*(?!\w)/g, "$1$2")
+      .replace(/(^|\s)_(?!\s)([^_\n]+?)_(?!\w)/g, "$1$2")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^\s*[-*]\s+/gm, "• ")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
+
   const streamResponse = async (resp: Response) => {
     let assistantContent = "";
     const reader = resp.body?.getReader();

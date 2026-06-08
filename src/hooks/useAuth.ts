@@ -7,7 +7,7 @@ export type AppRole = "dod" | "dos" | "principal" | "teacher" | "discipline_staf
 export interface AuthState {
   user: User | null;
   session: Session | null;
-  profile: { id: string; full_name: string; email: string } | null;
+  profile: { id: string; full_name: string; email: string; status?: string } | null;
   userRole: AppRole | null;
   isLoading: boolean;
 }

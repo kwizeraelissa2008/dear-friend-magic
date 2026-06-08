@@ -80,7 +80,7 @@ const AIAssistant = () => {
           if (delta) {
             assistantContent += delta;
             // Hide the navigation marker from UI while streaming
-            const display = stripNavMarker(assistantContent);
+            const display = stripMarkdown(stripNavMarker(assistantContent));
             setMessages(prev => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {

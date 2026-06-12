@@ -138,13 +138,31 @@ const UserManagement = () => {
     }
   };
 
+  const handleDelete = async (u: UserProfile) => {
+    if (!user) return;
+    setProcessingId(u.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { targetUserId: u.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`${u.full_name} has been deleted`);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete user");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   if (!hasRole("principal")) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-bold">Access Denied</h2>
-          <p className="text-muted-foreground">Only the Principal can manage users.</p>
+          <p className="text-slate-600">Only the Principal can manage users.</p>
         </div>
       </DashboardLayout>
     );
@@ -158,10 +176,10 @@ const UserManagement = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Shield className="w-8 h-8" /> User Management
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+              <Shield className="w-7 h-7 text-primary" /> User Management
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-600 mt-1">
               {pendingCount > 0 ? `${pendingCount} pending approval${pendingCount > 1 ? "s" : ""}` : "All users processed"}
             </p>
           </div>
@@ -177,13 +195,13 @@ const UserManagement = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center py-12 text-muted-foreground">Loading users...</p>
+          <p className="text-center py-12 text-slate-600">Loading users...</p>
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <Users className="w-12 h-12 mx-auto text-slate-400 mb-4" />
               <h3 className="text-lg font-semibold">No Users Found</h3>
-              <p className="text-muted-foreground">No users match the current filter.</p>
+              <p className="text-slate-600">No users match the current filter.</p>
             </CardContent>
           </Card>
         ) : (
@@ -191,10 +209,12 @@ const UserManagement = () => {
             {filtered.map(u => (
               <UserCard
                 key={u.id}
+                currentUserId={user?.id}
                 user={u}
                 isProcessing={processingId === u.id}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onDelete={handleDelete}
               />
             ))}
           </div>
@@ -204,33 +224,37 @@ const UserManagement = () => {
   );
 };
 
-function UserCard({ user: u, isProcessing, onApprove, onReject }: {
+function UserCard({ user: u, currentUserId, isProcessing, onApprove, onReject, onDelete }: {
   user: UserProfile;
+  currentUserId?: string;
   isProcessing: boolean;
   onApprove: (u: UserProfile, role: string) => void;
   onReject: (u: UserProfile) => void;
+  onDelete: (u: UserProfile) => void;
 }) {
   const [selectedRole, setSelectedRole] = useState(u.desired_role || u.current_role || "teacher");
 
   const statusBadge = u.status === "approved" ? "default" : u.status === "rejected" ? "destructive" : "secondary";
+  const isSelf = currentUserId === u.id;
 
   return (
-    <Card className={u.status === "pending" ? "border-primary/50 bg-primary/5" : ""}>
+    <Card className={`shadow-sm ${u.status === "pending" ? "border-primary/40 bg-primary/5" : "border-border"}`}>
       <CardContent className="pt-4 pb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-semibold">{u.full_name}</h4>
+              <h4 className="font-semibold text-foreground">{u.full_name}</h4>
               <Badge variant={statusBadge} className="capitalize">{u.status}</Badge>
               {u.current_role && (
                 <Badge variant="outline">{roleLabels[u.current_role] || u.current_role}</Badge>
               )}
+              {isSelf && <Badge variant="outline" className="text-primary border-primary/30">You</Badge>}
             </div>
-            <p className="text-sm text-muted-foreground">{u.email}</p>
+            <p className="text-sm text-slate-600">{u.email}</p>
             {u.desired_role && u.status === "pending" && (
-              <p className="text-xs text-muted-foreground">Requested role: <strong>{roleLabels[u.desired_role] || u.desired_role}</strong></p>
+              <p className="text-xs text-slate-600">Requested role: <strong>{roleLabels[u.desired_role] || u.desired_role}</strong></p>
             )}
-            <p className="text-xs text-muted-foreground">Registered: {new Date(u.created_at).toLocaleDateString()}</p>
+            <p className="text-xs text-slate-500">Registered: {new Date(u.created_at).toLocaleDateString()}</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -255,6 +279,32 @@ function UserCard({ user: u, isProcessing, onApprove, onReject }: {
                 <XCircle className="w-4 h-4" /> Reject
               </Button>
             )}
+            {!isSelf && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive" disabled={isProcessing}>
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this user permanently?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove <strong>{u.full_name}</strong> and all related profile data. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => onDelete(u)}
+                    >
+                      Delete user
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </CardContent>
@@ -263,3 +313,4 @@ function UserCard({ user: u, isProcessing, onApprove, onReject }: {
 }
 
 export default UserManagement;
+

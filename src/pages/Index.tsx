@@ -36,7 +36,7 @@ const Landing = () => {
   }, [isLoading, session, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/40">
+    <div className="min-h-screen bg-hero-glow">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
         <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-4">

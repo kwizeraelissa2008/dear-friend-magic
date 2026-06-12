@@ -2,14 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* SDMS Design System — premium, modern educational SaaS aesthetic */
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Surfaces — slate-50 base so white cards pop */
+    --background: 210 40% 98%;          /* #F8FAFC */
+    --foreground: 222 47% 11%;          /* #0F172A slate-900 */
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -17,101 +16,100 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 200 95% 40%;
+    /* Primary — rich flagship blue (blue-600) */
+    --primary: 221 83% 53%;             /* #2563EB */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 195 80% 95%;
-    --secondary-foreground: 200 95% 35%;
+    --secondary: 214 32% 91%;           /* slate-200 */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 40% 96%;               /* slate-100 */
+    --muted-foreground: 215 25% 35%;    /* slate-600+ for AA contrast */
 
-    --accent: 155 60% 45%;
+    /* Accent — emerald-500 success */
+    --accent: 160 84% 39%;              /* #10B981 */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%;           /* red-500 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
+    --border: 214 32% 91%;              /* slate-200 #E2E8F0 */
     --input: 214 32% 91%;
-    --ring: 200 95% 40%;
+    --ring: 221 83% 53%;
 
     --radius: 0.75rem;
 
-    --success: 142 76% 36%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 92% 50%;              /* amber-500 #F59E0B */
     --warning-foreground: 0 0% 100%;
 
-    --info: 200 95% 40%;
+    --info: 221 83% 53%;
     --info-foreground: 0 0% 100%;
 
     --sidebar-background: 210 40% 98%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 200 95% 40%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 195 80% 95%;
-    --sidebar-accent-foreground: 200 95% 35%;
+    --sidebar-accent: 214 32% 95%;
+    --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 200 95% 40%;
+    --sidebar-ring: 221 83% 53%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(200 95% 40%), hsl(195 100% 50%));
-    --gradient-accent: linear-gradient(135deg, hsl(155 60% 45%), hsl(145 70% 55%));
-    
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(217 91% 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(160 84% 39%), hsl(158 64% 52%));
+
+    /* Elevation */
+    --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+    --shadow: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+    --shadow-lg: 0 20px 40px -12px rgb(15 23 42 / 0.12);
+
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 217 33% 17%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 17%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 200 95% 50%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 6%;
 
     --secondary: 217 33% 20%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 75%;
 
-    --accent: 155 60% 50%;
+    --accent: 160 84% 45%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 200 95% 50%;
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+    --ring: 217 91% 60%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --success: 160 84% 45%;
+    --warning: 38 92% 55%;
+    --info: 217 91% 60%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --info: 200 95% 50%;
-    --info-foreground: 222 47% 11%;
-
-    --sidebar-background: 222 47% 11%;
+    --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 200 95% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 20%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 217 33% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 200 95% 50%;
+    --sidebar-border: 217 33% 22%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -120,7 +118,61 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Subtle radial brand glow for landing hero */
+  .bg-hero-glow {
+    background:
+      radial-gradient(800px 400px at 15% 0%, hsl(221 83% 53% / 0.08), transparent 60%),
+      radial-gradient(700px 400px at 90% 10%, hsl(160 84% 39% / 0.06), transparent 65%),
+      hsl(var(--background));
+  }
+
+  /* Tech dot matrix */
+  .bg-dot-grid {
+    background-image: radial-gradient(hsl(222 47% 11% / 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* App content surface */
+  .bg-app {
+    background-color: hsl(210 40% 98%);
+  }
+
+  /* Cards */
+  .card-elevated {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Activity timeline vertical track */
+  .timeline-track {
+    @apply relative pl-5;
+  }
+  .timeline-track::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    width: 2px;
+    background: hsl(var(--border));
+    border-radius: 9999px;
   }
 }

@@ -84,30 +84,38 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <div className="min-h-screen bg-app">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/75">
         <div className="container flex h-16 items-center justify-between px-4">
-          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
+          <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-blue-500 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
               <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-xl font-bold text-foreground leading-tight truncate">SDMS</h1>
-              <p className="hidden sm:block text-xs text-muted-foreground truncate">School Discipline Management</p>
+              <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight truncate">SDMS</h1>
+              <p className="hidden sm:block text-xs text-slate-600 truncate">School Discipline Management</p>
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-0.5">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
                 <Link key={item.path} to={item.path}>
-                  <Button variant={isActive ? "default" : "ghost"} size="sm" className="gap-2 relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`gap-2 relative h-9 rounded-full px-3.5 font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-foreground"
+                    }`}
+                  >
                     <Icon className="w-4 h-4" />
                     {item.name}
                     {item.badge ? (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 px-1 text-[10px]">
                         {item.badge}
                       </Badge>
                     ) : null}
@@ -116,6 +124,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               );
             })}
           </nav>
+
 
           <div className="flex items-center gap-2">
             <DropdownMenu>

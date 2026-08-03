@@ -61,7 +61,7 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
       gender: parsed.data.gender,
       date_of_birth: parsed.data.dob,
       student_id: parsed.data.studentId,
-      class_id: classId,
+  class_id: classId,
       parent_name: parsed.data.parentName || null,
       parent_phone: parsed.data.parentPhone || null,
       photo_url: parsed.data.photoUrl || null,
@@ -130,7 +130,7 @@ const AddStudentDialog = ({ classId, onStudentAdded }: AddStudentDialogProps) =>
     setIsLoading(true);
     const rows = csvStudents.map(s => ({
       name: s.name, gender: s.gender, date_of_birth: s.date_of_birth, student_id: s.student_id,
-      class_id: classId, parent_name: s.parent_name || null, parent_phone: s.parent_phone || null,
+  class_id: classId, parent_name: s.parent_name || null, parent_phone: s.parent_phone || null,
       photo_url: s.photo_url || null,
     }));
     const { error } = await supabase.from("students").insert(rows);

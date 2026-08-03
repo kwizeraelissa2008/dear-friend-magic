@@ -100,14 +100,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 asChild
                 variant="ghost"
                 size="icon"
-                className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+  className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
               >
                 <Link to="/notifications" aria-label="Notifications">
                   <Bell className="h-[18px] w-[18px]" />
                   {unreadCount > 0 && (
                     <Badge
                       variant="destructive"
-                      className="absolute -right-0.5 -top-0.5 h-4 min-w-4 justify-center p-0 px-1 text-[10px]"
+  className="absolute -right-0.5 -top-0.5 h-4 min-w-4 justify-center p-0 px-1 text-[10px]"
                     >
                       {unreadCount}
                     </Badge>

@@ -35,7 +35,7 @@ const Analytics = () => {
       const classMap: Record<string, number> = {};
       incidents.forEach(i => {
         const cls = (i as any).students?.classes?.name || "Unknown";
-        classMap[cls] = (classMap[cls] || 0) + 1;
+  classMap[cls] = (classMap[cls] || 0) + 1;
       });
       setClassData(Object.entries(classMap).map(([name, incidents]) => ({ name, incidents })).sort((a, b) => b.incidents - a.incidents));
 

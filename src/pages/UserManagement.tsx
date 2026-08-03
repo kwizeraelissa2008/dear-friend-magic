@@ -162,7 +162,7 @@ const UserManagement = () => {
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-bold">Access Denied</h2>
-          <p className="text-slate-600">Only the Principal can manage users.</p>
+          <p className="text-muted-foreground">Only the Principal can manage users.</p>
         </div>
       </DashboardLayout>
     );
@@ -179,7 +179,7 @@ const UserManagement = () => {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
               <Shield className="w-7 h-7 text-primary" /> User Management
             </h1>
-            <p className="text-slate-600 mt-1">
+            <p className="text-muted-foreground mt-1">
               {pendingCount > 0 ? `${pendingCount} pending approval${pendingCount > 1 ? "s" : ""}` : "All users processed"}
             </p>
           </div>
@@ -195,13 +195,13 @@ const UserManagement = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center py-12 text-slate-600">Loading users...</p>
+          <p className="text-center py-12 text-muted-foreground">Loading users...</p>
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Users className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+              <Users className="w-12 h-12 mx-auto text-muted-foreground/70 mb-4" />
               <h3 className="text-lg font-semibold">No Users Found</h3>
-              <p className="text-slate-600">No users match the current filter.</p>
+              <p className="text-muted-foreground">No users match the current filter.</p>
             </CardContent>
           </Card>
         ) : (
@@ -250,11 +250,11 @@ function UserCard({ user: u, currentUserId, isProcessing, onApprove, onReject, o
               )}
               {isSelf && <Badge variant="outline" className="text-primary border-primary/30">You</Badge>}
             </div>
-            <p className="text-sm text-slate-600">{u.email}</p>
+            <p className="text-sm text-muted-foreground">{u.email}</p>
             {u.desired_role && u.status === "pending" && (
-              <p className="text-xs text-slate-600">Requested role: <strong>{roleLabels[u.desired_role] || u.desired_role}</strong></p>
+              <p className="text-xs text-muted-foreground">Requested role: <strong>{roleLabels[u.desired_role] || u.desired_role}</strong></p>
             )}
-            <p className="text-xs text-slate-500">Registered: {new Date(u.created_at).toLocaleDateString()}</p>
+            <p className="text-xs text-muted-foreground">Registered: {new Date(u.created_at).toLocaleDateString()}</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -296,7 +296,7 @@ function UserCard({ user: u, currentUserId, isProcessing, onApprove, onReject, o
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onClick={() => onDelete(u)}
                     >
                       Delete user

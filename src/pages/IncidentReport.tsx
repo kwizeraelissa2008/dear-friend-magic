@@ -154,7 +154,7 @@ const IncidentReport = () => {
                     <HoverCard key={s.id}>
                       <HoverCardTrigger asChild>
                         <button
-                          className="w-full flex items-center gap-3 p-3 hover:bg-muted/50 text-left"
+  className="w-full flex items-center gap-3 p-3 hover:bg-muted/50 text-left"
                           onClick={() => { setSelectedStudent(s); setSearchQuery(s.name); setSearchResults([]); }}
                         >
                           <Avatar className="w-8 h-8">

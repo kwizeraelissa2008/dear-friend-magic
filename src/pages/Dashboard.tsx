@@ -90,7 +90,7 @@ const Dashboard = () => {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Welcome, {profile?.full_name || "User"}
           </h1>
-          <div className="text-sm text-slate-600 dark:text-muted-foreground flex items-center flex-wrap gap-2 mt-2">
+          <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-2 mt-2">
             {roleLabel && <Badge variant="secondary" className="font-medium">{roleLabel}</Badge>}
             <span>School Discipline Management System</span>
           </div>
@@ -105,11 +105,11 @@ const Dashboard = () => {
               return (
                 <Card
                   key={stat.title}
-                  className="border border-border bg-card shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+  className="border border-border bg-card shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
                 >
                   <CardContent className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-muted-foreground">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                         {stat.title}
                       </p>
                       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.ring}`}>
@@ -117,7 +117,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">{stat.value}</div>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-muted-foreground">{stat.description}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{stat.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -130,7 +130,7 @@ const Dashboard = () => {
           <Card className="border border-border shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Quick Actions</CardTitle>
-              <CardDescription className="text-slate-600 dark:text-muted-foreground">
+              <CardDescription className="text-muted-foreground">
                 Shortcuts based on your role
               </CardDescription>
             </CardHeader>
@@ -142,13 +142,13 @@ const Dashboard = () => {
                     <li key={a.to}>
                       <Link
                         to={a.to}
-                        className="group flex items-center gap-3 px-4 py-3 bg-card hover:bg-slate-50 dark:hover:bg-muted/40 transition-colors"
+  className="group flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50  transition-colors"
                       >
                         <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4" />
                         </div>
                         <span className="flex-1 text-sm font-medium text-foreground">{a.label}</span>
-                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                       </Link>
                     </li>
                   );
@@ -162,7 +162,7 @@ const Dashboard = () => {
             <CardHeader className="pb-3 flex flex-row items-start justify-between gap-2 space-y-0">
               <div>
                 <CardTitle className="text-lg">Recent Activity</CardTitle>
-                <CardDescription className="text-slate-600 dark:text-muted-foreground">
+                <CardDescription className="text-muted-foreground">
                   Latest actions across the system
                 </CardDescription>
               </div>
@@ -177,29 +177,29 @@ const Dashboard = () => {
             <CardContent>
               {recentActivity.length === 0 ? (
                 <div className="py-8 text-center">
-                  <Clock className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-                  <p className="text-sm text-slate-600 dark:text-muted-foreground">No recent activity yet.</p>
+                  <Clock className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">No recent activity yet.</p>
                 </div>
               ) : (
                 <div className="timeline-track space-y-4">
                   {recentActivity.map(a => {
                     const Inner = (
-                      <div className="group flex items-start gap-3 -ml-1 pl-1 pr-2 py-1 rounded-md hover:bg-slate-50 dark:hover:bg-muted/40 transition-colors cursor-pointer">
+                      <div className="group flex items-start gap-3 -ml-1 pl-1 pr-2 py-1 rounded-md hover:bg-muted/50  transition-colors cursor-pointer">
                         <span className="absolute -ml-[1.35rem] mt-1.5 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold capitalize text-foreground">
                             {a.action.replace(/_/g, " ")}
                           </p>
                           {a.details && (
-                            <p className="text-xs text-slate-600 dark:text-muted-foreground truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {a.details}
                             </p>
                           )}
-                          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-muted-foreground">
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
                             {new Date(a.created_at).toLocaleString()}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-primary mt-1 shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground/70 group-hover:text-primary mt-1 shrink-0" />
                       </div>
                     );
                     return hasRole("principal", "dos", "dod") ? (

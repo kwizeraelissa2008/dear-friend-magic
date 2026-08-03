@@ -60,7 +60,7 @@ const Landing = () => {
       <section className="relative overflow-hidden bg-midnight">
         <div className="absolute inset-0 bg-dot-grid opacity-[0.35]" aria-hidden />
         <div
-          className="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full blur-3xl"
+  className="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full blur-3xl"
           style={{ background: "radial-gradient(circle, hsl(243 75% 59% / 0.45), transparent 65%)" }}
           aria-hidden
         />
@@ -88,7 +88,7 @@ const Landing = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto rounded-full px-7 border-white/20 bg-white/5 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+  className="w-full sm:w-auto rounded-full px-7 border-white/20 bg-white/5 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
               >
                 I already have an account
               </Button>

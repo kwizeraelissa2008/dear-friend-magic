@@ -71,7 +71,7 @@ const AuditLogs = () => {
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-bold">Access Denied</h2>
-          <p className="text-slate-600">Only administrators can view audit logs.</p>
+          <p className="text-muted-foreground">Only administrators can view audit logs.</p>
         </div>
       </DashboardLayout>
     );
@@ -95,7 +95,7 @@ const AuditLogs = () => {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
               <ScrollText className="w-7 h-7 text-primary" /> Audit Logs
             </h1>
-            <p className="text-slate-600 mt-1">Complete history of all system actions</p>
+            <p className="text-muted-foreground mt-1">Complete history of all system actions</p>
           </div>
           {isPrincipal && logs.length > 0 && (
             <AlertDialog>
@@ -123,12 +123,12 @@ const AuditLogs = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center py-12 text-slate-600">Loading audit logs...</p>
+          <p className="text-center py-12 text-muted-foreground">Loading audit logs...</p>
         ) : logs.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Clock className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-600">No audit logs yet.</p>
+              <Clock className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground">No audit logs yet.</p>
             </CardContent>
           </Card>
         ) : (
@@ -136,7 +136,7 @@ const AuditLogs = () => {
             <CardContent className="pt-6">
               <div className="timeline-track space-y-4">
                 {logs.map(log => (
-                  <div key={log.id} className="relative flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-slate-50 transition-colors">
+                  <div key={log.id} className="relative flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors">
                     <span className="absolute -ml-[1.35rem] mt-2 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -146,17 +146,17 @@ const AuditLogs = () => {
                         <span className="text-xs font-semibold text-foreground">
                           {log.performer_name}
                           {log.performer_role && (
-                            <span className="text-slate-600 font-normal"> ({formatRole(log.performer_role)})</span>
+                            <span className="text-muted-foreground font-normal"> ({formatRole(log.performer_role)})</span>
                           )}
                         </span>
-                        <span className="text-xs text-slate-500">{new Date(log.created_at).toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</span>
                       </div>
-                      {log.details && <p className="text-sm text-slate-600 mt-1 truncate">{log.details}</p>}
+                      {log.details && <p className="text-sm text-muted-foreground mt-1 truncate">{log.details}</p>}
                     </div>
                     {isPrincipal && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-destructive hover:bg-destructive/10">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>

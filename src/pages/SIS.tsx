@@ -112,7 +112,7 @@ const SIS = () => {
                     {hasRole("dos") && (
                       <Button
                         variant="outline" size="icon"
-                        className="shrink-0 text-destructive hover:text-destructive"
+  className="shrink-0 text-destructive hover:text-destructive"
                         onClick={() => setPendingDelete(classItem)}
                         aria-label={`Delete class ${classItem.name}`}
                       >

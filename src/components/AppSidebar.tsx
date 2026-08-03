@@ -68,7 +68,7 @@ const AppSidebar = ({ unreadCount = 0 }: AppSidebarProps) => {
                     asChild
                     isActive={isActive}
                     tooltip={item.name}
-                    className="h-10 rounded-xl text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-[0_8px_24px_-12px_hsl(var(--primary))]"
+  className="h-10 rounded-xl text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-[0_8px_24px_-12px_hsl(var(--primary))]"
                   >
                     <Link to={item.path} className="flex items-center gap-3">
                       <Icon className="h-[18px] w-[18px] shrink-0" />

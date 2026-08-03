@@ -277,7 +277,7 @@ const Chat = () => {
                   <Button
                     key={c.id}
                     variant={activeConv === c.id ? "secondary" : "ghost"}
-                    className="w-full justify-start gap-2 h-auto py-3"
+  className="w-full justify-start gap-2 h-auto py-3"
                     onClick={() => selectConversation(c.id)}
                   >
                     {c.type === "group" ? <Users className="w-4 h-4 shrink-0" /> : <User className="w-4 h-4 shrink-0" />}
@@ -335,7 +335,7 @@ const Chat = () => {
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  className="text-sm"
+  className="text-sm"
                 />
                 <Button onClick={handleSend} disabled={isSending || !newMessage.trim()} size="icon" className="shrink-0">
                   {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

@@ -5,8 +5,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ScrollText, Clock, AlertTriangle, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,25 +36,36 @@ const AuditLogs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const isPrincipal = hasRole("principal");
 
-  useEffect(() => { fetchLogs(); }, []);
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   const fetchLogs = async () => {
     setIsLoading(true);
-    const { data } = await supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(200);
+    const { data } = await supabase
+      .from("audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
 
-    const performerIds = [...new Set((data || []).map(d => d.performed_by))];
+    const performerIds = [...new Set((data || []).map((d) => d.performed_by))];
     const [{ data: profiles }, { data: roles }] = await Promise.all([
       supabase.from("profiles").select("id, full_name").in("id", performerIds),
-      supabase.from("user_roles").select("user_id, role").in("user_id", performerIds),
+      supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", performerIds),
     ]);
-    const nameMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
-    const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
+    const nameMap = new Map(profiles?.map((p) => [p.id, p.full_name]) || []);
+    const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
 
-    setLogs((data || []).map(d => ({
-      ...d,
-      performer_name: nameMap.get(d.performed_by) || "Unknown",
-      performer_role: roleMap.get(d.performed_by) || "",
-    })));
+    setLogs(
+      (data || []).map((d) => ({
+        ...d,
+        performer_name: nameMap.get(d.performed_by) || "Unknown",
+        performer_role: roleMap.get(d.performed_by) || "",
+      })),
+    );
     setIsLoading(false);
   };
 
@@ -55,11 +73,14 @@ const AuditLogs = () => {
     const { error } = await supabase.from("audit_logs").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Log entry deleted");
-    setLogs(prev => prev.filter(l => l.id !== id));
+    setLogs((prev) => prev.filter((l) => l.id !== id));
   };
 
   const clearAll = async () => {
-    const { error } = await supabase.from("audit_logs").delete().not("id", "is", null);
+    const { error } = await supabase
+      .from("audit_logs")
+      .delete()
+      .not("id", "is", null);
     if (error) return toast.error(error.message);
     toast.success("All audit logs cleared");
     setLogs([]);
@@ -71,7 +92,9 @@ const AuditLogs = () => {
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-bold">Access Denied</h2>
-          <p className="text-slate-600">Only administrators can view audit logs.</p>
+          <p className="text-muted-foreground">
+            Only administrators can view audit logs.
+          </p>
         </div>
       </DashboardLayout>
     );
@@ -79,13 +102,14 @@ const AuditLogs = () => {
 
   const actionColor = (action: string) => {
     if (action.includes("approved")) return "default";
-    if (action.includes("rejected") || action.includes("deleted")) return "destructive";
+    if (action.includes("rejected") || action.includes("deleted"))
+      return "destructive";
     if (action.includes("reported")) return "secondary";
     return "outline";
   };
 
   const formatRole = (role?: string) =>
-    role ? role.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
+    role ? role.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 
   return (
     <DashboardLayout>
@@ -95,12 +119,17 @@ const AuditLogs = () => {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
               <ScrollText className="w-7 h-7 text-primary" /> Audit Logs
             </h1>
-            <p className="text-slate-600 mt-1">Complete history of all system actions</p>
+            <p className="text-muted-foreground mt-1">
+              Complete history of all system actions
+            </p>
           </div>
           {isPrincipal && logs.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
+                <Button
+                  variant="outline"
+                  className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                >
                   <Trash2 className="w-4 h-4" /> Clear all
                 </Button>
               </AlertDialogTrigger>
@@ -108,12 +137,16 @@ const AuditLogs = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Clear all audit logs?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This permanently removes every log entry. This action cannot be undone.
+                    This permanently removes every log entry. This action cannot
+                    be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={clearAll}>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={clearAll}
+                  >
                     Clear all
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -123,51 +156,79 @@ const AuditLogs = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center py-12 text-slate-600">Loading audit logs...</p>
+          <p className="text-center py-12 text-muted-foreground">
+            Loading audit logs...
+          </p>
         ) : logs.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Clock className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-600">No audit logs yet.</p>
+              <Clock className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground">No audit logs yet.</p>
             </CardContent>
           </Card>
         ) : (
           <Card className="shadow-sm">
             <CardContent className="pt-6">
               <div className="timeline-track space-y-4">
-                {logs.map(log => (
-                  <div key={log.id} className="relative flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-slate-50 transition-colors">
+                {logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="relative flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
+                  >
                     <span className="absolute -ml-[1.35rem] mt-2 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={actionColor(log.action) as any} className="capitalize">
+                        <Badge
+                          variant={actionColor(log.action) as any}
+                          className="capitalize"
+                        >
                           {log.action.replace(/_/g, " ")}
                         </Badge>
                         <span className="text-xs font-semibold text-foreground">
                           {log.performer_name}
                           {log.performer_role && (
-                            <span className="text-slate-600 font-normal"> ({formatRole(log.performer_role)})</span>
+                            <span className="text-muted-foreground font-normal">
+                              {" "}
+                              ({formatRole(log.performer_role)})
+                            </span>
                           )}
                         </span>
-                        <span className="text-xs text-slate-500">{new Date(log.created_at).toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString()}
+                        </span>
                       </div>
-                      {log.details && <p className="text-sm text-slate-600 mt-1 truncate">{log.details}</p>}
+                      {log.details && (
+                        <p className="text-sm text-muted-foreground mt-1 truncate">
+                          {log.details}
+                        </p>
+                      )}
                     </div>
                     {isPrincipal && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-destructive hover:bg-destructive/10">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this log entry?</AlertDialogTitle>
-                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                            <AlertDialogTitle>
+                              Delete this log entry?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone.
+                            </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteOne(log.id)}>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => deleteOne(log.id)}
+                            >
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>

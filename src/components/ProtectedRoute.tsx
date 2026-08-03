@@ -42,9 +42,12 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
           </div>
           <h1 className="text-2xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground text-sm">
-            You don't have permission to view this page. Contact your Principal if you believe this is a mistake.
+            You don't have permission to view this page. Contact your Principal
+            if you believe this is a mistake.
           </p>
-          <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+          <Button onClick={() => navigate("/dashboard")}>
+            Go to Dashboard
+          </Button>
         </div>
       </div>
     );

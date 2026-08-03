@@ -37,8 +37,12 @@ export const StatsSkeleton = () => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
     {Array.from({ length: 4 }).map((_, i) => (
       <Card key={i}>
-        <CardHeader className="pb-2"><Skeleton className="h-4 w-2/3" /></CardHeader>
-        <CardContent><Skeleton className="h-7 w-1/3" /></CardContent>
+        <CardHeader className="pb-2">
+          <Skeleton className="h-4 w-2/3" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-7 w-1/3" />
+        </CardContent>
       </Card>
     ))}
   </div>

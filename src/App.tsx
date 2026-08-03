@@ -27,9 +27,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-const Private = ({ children, roles }: { children: React.ReactNode; roles?: any }) => (
-  <ProtectedRoute roles={roles}>{children}</ProtectedRoute>
-);
+const Private = ({
+  children,
+  roles,
+}: {
+  children: React.ReactNode;
+  roles?: any;
+}) => <ProtectedRoute roles={roles}>{children}</ProtectedRoute>;
 
 const App = () => (
   <ErrorBoundary>
@@ -44,19 +48,110 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pending" element={<Pending />} />
 
-            <Route path="/dashboard" element={<Private><Dashboard /></Private>} />
-            <Route path="/sis" element={<Private><SIS /></Private>} />
-            <Route path="/sis/class/:classId" element={<Private><ClassStudents /></Private>} />
-            <Route path="/sis/student/:studentId" element={<Private><StudentProfile /></Private>} />
-            <Route path="/report" element={<Private roles={["teacher", "discipline_staff"]}><IncidentReport /></Private>} />
-            <Route path="/reports" element={<Private roles={["dod"]}><Reports /></Private>} />
-            <Route path="/notifications" element={<Private><Notifications /></Private>} />
-            <Route path="/calendar" element={<Private><CalendarPage /></Private>} />
-            <Route path="/analytics" element={<Private roles={["principal", "dos"]}><Analytics /></Private>} />
-            <Route path="/audit-logs" element={<Private roles={["principal", "dos", "dod"]}><AuditLogs /></Private>} />
-            <Route path="/user-management" element={<Private roles={["principal"]}><UserManagement /></Private>} />
-            <Route path="/chat" element={<Private><Chat /></Private>} />
-            <Route path="/about" element={<Private><About /></Private>} />
+            <Route
+              path="/dashboard"
+              element={
+                <Private>
+                  <Dashboard />
+                </Private>
+              }
+            />
+            <Route
+              path="/sis"
+              element={
+                <Private>
+                  <SIS />
+                </Private>
+              }
+            />
+            <Route
+              path="/sis/class/:classId"
+              element={
+                <Private>
+                  <ClassStudents />
+                </Private>
+              }
+            />
+            <Route
+              path="/sis/student/:studentId"
+              element={
+                <Private>
+                  <StudentProfile />
+                </Private>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <Private roles={["teacher", "discipline_staff"]}>
+                  <IncidentReport />
+                </Private>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <Private roles={["dod"]}>
+                  <Reports />
+                </Private>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <Private>
+                  <Notifications />
+                </Private>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <Private>
+                  <CalendarPage />
+                </Private>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <Private roles={["principal", "dos"]}>
+                  <Analytics />
+                </Private>
+              }
+            />
+            <Route
+              path="/audit-logs"
+              element={
+                <Private roles={["principal", "dos", "dod"]}>
+                  <AuditLogs />
+                </Private>
+              }
+            />
+            <Route
+              path="/user-management"
+              element={
+                <Private roles={["principal"]}>
+                  <UserManagement />
+                </Private>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <Private>
+                  <Chat />
+                </Private>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <Private>
+                  <About />
+                </Private>
+              }
+            />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

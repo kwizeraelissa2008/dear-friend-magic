@@ -7,7 +7,10 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    console.error(
+      "404 Error: User attempted to access non-existent route:",
+      location.pathname,
+    );
     document.title = "Page Not Found — SDMS";
   }, [location.pathname]);
 
@@ -21,11 +24,17 @@ const NotFound = () => {
           <h1 className="text-6xl font-bold tracking-tight">404</h1>
           <p className="text-xl font-medium">Page not found</p>
           <p className="text-sm text-muted-foreground">
-            The page <code className="px-1.5 py-0.5 rounded bg-muted text-xs">{location.pathname}</code> does not exist or has been moved.
+            The page{" "}
+            <code className="px-1.5 py-0.5 rounded bg-muted text-xs">
+              {location.pathname}
+            </code>{" "}
+            does not exist or has been moved.
           </p>
         </div>
         <Button asChild className="gap-2">
-          <Link to="/"><Home className="w-4 h-4" /> Return Home</Link>
+          <Link to="/">
+            <Home className="w-4 h-4" /> Return Home
+          </Link>
         </Button>
       </div>
     </div>

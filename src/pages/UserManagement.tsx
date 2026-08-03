@@ -1,18 +1,44 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, CheckCircle, XCircle, Loader2, Users, Shield, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Users,
+  Shield,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-
 
 interface UserProfile {
   id: string;
@@ -33,7 +59,13 @@ const roleLabels: Record<string, string> = {
 };
 
 const groupConversations: Record<string, string[]> = {
-  "00000000-0000-0000-0000-000000000001": ["dod", "dos", "principal", "teacher", "discipline_staff"], // All Staff
+  "00000000-0000-0000-0000-000000000001": [
+    "dod",
+    "dos",
+    "principal",
+    "teacher",
+    "discipline_staff",
+  ], // All Staff
   "00000000-0000-0000-0000-000000000002": ["teacher"], // Teachers
   "00000000-0000-0000-0000-000000000003": ["dod", "discipline_staff"], // Discipline Team
 };
@@ -45,15 +77,22 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     setIsLoading(true);
-    const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
-    const { data: roles } = await supabase.from("user_roles").select("user_id, role");
-    
-    const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
-    const enriched = (profiles || []).map(p => ({
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role");
+
+    const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
+    const enriched = (profiles || []).map((p) => ({
       ...p,
       current_role: roleMap.get(p.id) || null,
     }));
@@ -66,22 +105,32 @@ const UserManagement = () => {
     setProcessingId(u.id);
     try {
       // Update profile status
-      await supabase.from("profiles").update({ status: "approved" }).eq("id", u.id);
-      
+      await supabase
+        .from("profiles")
+        .update({ status: "approved" })
+        .eq("id", u.id);
+
       // Assign role (upsert)
       if (u.current_role) {
-        await supabase.from("user_roles").update({ role: assignRole as any }).eq("user_id", u.id);
+        await supabase
+          .from("user_roles")
+          .update({ role: assignRole as any })
+          .eq("user_id", u.id);
       } else {
-        await supabase.from("user_roles").insert({ user_id: u.id, role: assignRole as any });
+        await supabase
+          .from("user_roles")
+          .insert({ user_id: u.id, role: assignRole as any });
       }
 
       // Add to group conversations based on role
       for (const [convId, convRoles] of Object.entries(groupConversations)) {
         if (convRoles.includes(assignRole)) {
-          await supabase.from("conversation_members").upsert(
-            { conversation_id: convId, user_id: u.id },
-            { onConflict: "conversation_id,user_id" }
-          );
+          await supabase
+            .from("conversation_members")
+            .upsert(
+              { conversation_id: convId, user_id: u.id },
+              { onConflict: "conversation_id,user_id" },
+            );
         }
       }
 
@@ -113,7 +162,10 @@ const UserManagement = () => {
     if (!user) return;
     setProcessingId(u.id);
     try {
-      await supabase.from("profiles").update({ status: "rejected" }).eq("id", u.id);
+      await supabase
+        .from("profiles")
+        .update({ status: "rejected" })
+        .eq("id", u.id);
 
       await supabase.from("notifications").insert({
         user_id: u.id,
@@ -162,14 +214,19 @@ const UserManagement = () => {
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-bold">Access Denied</h2>
-          <p className="text-slate-600">Only the Principal can manage users.</p>
+          <p className="text-muted-foreground">
+            Only the Principal can manage users.
+          </p>
         </div>
       </DashboardLayout>
     );
   }
 
-  const filtered = statusFilter === "all" ? users : users.filter(u => u.status === statusFilter);
-  const pendingCount = users.filter(u => u.status === "pending").length;
+  const filtered =
+    statusFilter === "all"
+      ? users
+      : users.filter((u) => u.status === statusFilter);
+  const pendingCount = users.filter((u) => u.status === "pending").length;
 
   return (
     <DashboardLayout>
@@ -179,12 +236,16 @@ const UserManagement = () => {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
               <Shield className="w-7 h-7 text-primary" /> User Management
             </h1>
-            <p className="text-slate-600 mt-1">
-              {pendingCount > 0 ? `${pendingCount} pending approval${pendingCount > 1 ? "s" : ""}` : "All users processed"}
+            <p className="text-muted-foreground mt-1">
+              {pendingCount > 0
+                ? `${pendingCount} pending approval${pendingCount > 1 ? "s" : ""}`
+                : "All users processed"}
             </p>
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
@@ -195,18 +256,22 @@ const UserManagement = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-center py-12 text-slate-600">Loading users...</p>
+          <p className="text-center py-12 text-muted-foreground">
+            Loading users...
+          </p>
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Users className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+              <Users className="w-12 h-12 mx-auto text-muted-foreground/70 mb-4" />
               <h3 className="text-lg font-semibold">No Users Found</h3>
-              <p className="text-slate-600">No users match the current filter.</p>
+              <p className="text-muted-foreground">
+                No users match the current filter.
+              </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
-            {filtered.map(u => (
+            {filtered.map((u) => (
               <UserCard
                 key={u.id}
                 currentUserId={user?.id}
@@ -224,7 +289,14 @@ const UserManagement = () => {
   );
 };
 
-function UserCard({ user: u, currentUserId, isProcessing, onApprove, onReject, onDelete }: {
+function UserCard({
+  user: u,
+  currentUserId,
+  isProcessing,
+  onApprove,
+  onReject,
+  onDelete,
+}: {
   user: UserProfile;
   currentUserId?: string;
   isProcessing: boolean;
@@ -232,65 +304,118 @@ function UserCard({ user: u, currentUserId, isProcessing, onApprove, onReject, o
   onReject: (u: UserProfile) => void;
   onDelete: (u: UserProfile) => void;
 }) {
-  const [selectedRole, setSelectedRole] = useState(u.desired_role || u.current_role || "teacher");
+  const [selectedRole, setSelectedRole] = useState(
+    u.desired_role || u.current_role || "teacher",
+  );
 
-  const statusBadge = u.status === "approved" ? "default" : u.status === "rejected" ? "destructive" : "secondary";
+  const statusBadge =
+    u.status === "approved"
+      ? "default"
+      : u.status === "rejected"
+        ? "destructive"
+        : "secondary";
   const isSelf = currentUserId === u.id;
 
   return (
-    <Card className={`shadow-sm ${u.status === "pending" ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+    <Card
+      className={`shadow-sm ${u.status === "pending" ? "border-primary/40 bg-primary/5" : "border-border"}`}
+    >
       <CardContent className="pt-4 pb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="font-semibold text-foreground">{u.full_name}</h4>
-              <Badge variant={statusBadge} className="capitalize">{u.status}</Badge>
+              <Badge variant={statusBadge} className="capitalize">
+                {u.status}
+              </Badge>
               {u.current_role && (
-                <Badge variant="outline">{roleLabels[u.current_role] || u.current_role}</Badge>
+                <Badge variant="outline">
+                  {roleLabels[u.current_role] || u.current_role}
+                </Badge>
               )}
-              {isSelf && <Badge variant="outline" className="text-primary border-primary/30">You</Badge>}
+              {isSelf && (
+                <Badge
+                  variant="outline"
+                  className="text-primary border-primary/30"
+                >
+                  You
+                </Badge>
+              )}
             </div>
-            <p className="text-sm text-slate-600">{u.email}</p>
+            <p className="text-sm text-muted-foreground">{u.email}</p>
             {u.desired_role && u.status === "pending" && (
-              <p className="text-xs text-slate-600">Requested role: <strong>{roleLabels[u.desired_role] || u.desired_role}</strong></p>
+              <p className="text-xs text-muted-foreground">
+                Requested role:{" "}
+                <strong>{roleLabels[u.desired_role] || u.desired_role}</strong>
+              </p>
             )}
-            <p className="text-xs text-slate-500">Registered: {new Date(u.created_at).toLocaleDateString()}</p>
+            <p className="text-xs text-muted-foreground">
+              Registered: {new Date(u.created_at).toLocaleDateString()}
+            </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {(u.status === "pending" || u.status === "approved") && (
               <>
                 <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(roleLabels).map(([val, label]) => (
-                      <SelectItem key={val} value={val}>{label}</SelectItem>
+                      <SelectItem key={val} value={val}>
+                        {label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button size="sm" className="gap-1" disabled={isProcessing} onClick={() => onApprove(u, selectedRole)}>
-                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                <Button
+                  size="sm"
+                  className="gap-1"
+                  disabled={isProcessing}
+                  onClick={() => onApprove(u, selectedRole)}
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
                   {u.status === "approved" ? "Update Role" : "Approve"}
                 </Button>
               </>
             )}
             {u.status === "pending" && (
-              <Button size="sm" variant="destructive" className="gap-1" disabled={isProcessing} onClick={() => onReject(u)}>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="gap-1"
+                disabled={isProcessing}
+                onClick={() => onReject(u)}
+              >
                 <XCircle className="w-4 h-4" /> Reject
               </Button>
             )}
             {!isSelf && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive" disabled={isProcessing}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    disabled={isProcessing}
+                  >
                     <Trash2 className="w-4 h-4" /> Delete
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this user permanently?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Delete this user permanently?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently remove <strong>{u.full_name}</strong> and all related profile data. This action cannot be undone.
+                      This will permanently remove{" "}
+                      <strong>{u.full_name}</strong> and all related profile
+                      data. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -313,4 +438,3 @@ function UserCard({ user: u, currentUserId, isProcessing, onApprove, onReject, o
 }
 
 export default UserManagement;
-

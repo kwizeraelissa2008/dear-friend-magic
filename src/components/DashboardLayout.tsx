@@ -39,11 +39,22 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (!user) return;
     const channel = supabase
       .channel("unread-count")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
-        fetchUnreadCount();
-      })
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchUnreadCount();
+        },
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const fetchUnreadCount = async () => {
@@ -63,11 +74,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   const roleLabel = userRole
-    ? userRole.replace("_", " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+    ? userRole
+        .replace("_", " ")
+        .replace(/\b\w/g, (c: string) => c.toUpperCase())
     : "";
 
   const getInitials = (name: string) =>
-    name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
 
   if (isLoading) {
     return (
@@ -92,7 +110,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   {profile?.full_name || "Welcome"}
                 </p>
                 {roleLabel && (
-                  <p className="truncate text-[11px] text-muted-foreground">{roleLabel}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {roleLabel}
+                  </p>
                 )}
               </div>
 
@@ -100,14 +120,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 asChild
                 variant="ghost"
                 size="icon"
-  className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
               >
                 <Link to="/notifications" aria-label="Notifications">
                   <Bell className="h-[18px] w-[18px]" />
                   {unreadCount > 0 && (
                     <Badge
                       variant="destructive"
-  className="absolute -right-0.5 -top-0.5 h-4 min-w-4 justify-center p-0 px-1 text-[10px]"
+                      className="absolute -right-0.5 -top-0.5 h-4 min-w-4 justify-center p-0 px-1 text-[10px]"
                     >
                       {unreadCount}
                     </Badge>
@@ -117,7 +137,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary text-xs text-primary-foreground">
                         {profile ? getInitials(profile.full_name) : "U"}
@@ -128,9 +152,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
-                      <p className="text-xs text-muted-foreground">{user?.email}</p>
-                      {roleLabel && <p className="text-xs text-primary">{roleLabel}</p>}
+                      <p className="text-sm font-medium">
+                        {profile?.full_name || "User"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {user?.email}
+                      </p>
+                      {roleLabel && (
+                        <p className="text-xs text-primary">{roleLabel}</p>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />

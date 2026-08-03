@@ -1,7 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  Home, Users, Bell, Calendar, FileText, Info, GraduationCap,
-  AlertTriangle, BarChart3, ScrollText, Shield, MessageSquare,
+  Home,
+  Users,
+  Bell,
+  Calendar,
+  FileText,
+  Info,
+  GraduationCap,
+  AlertTriangle,
+  BarChart3,
+  ScrollText,
+  Shield,
+  MessageSquare,
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,19 +42,34 @@ const AppSidebar = ({ unreadCount = 0 }: AppSidebarProps) => {
     { name: "Home", path: "/dashboard", icon: Home },
     { name: "Students", path: "/sis", icon: Users },
     { name: "Chat", path: "/chat", icon: MessageSquare },
-    { name: "Notifications", path: "/notifications", icon: Bell, badge: unreadCount },
+    {
+      name: "Notifications",
+      path: "/notifications",
+      icon: Bell,
+      badge: unreadCount,
+    },
     { name: "Calendar", path: "/calendar", icon: Calendar },
   ];
 
   const work = [
-    ...(hasRole("teacher", "discipline_staff") ? [{ name: "Report Incident", path: "/report", icon: AlertTriangle }] : []),
-    ...(hasRole("dod") ? [{ name: "Reports", path: "/reports", icon: FileText }] : []),
-    ...(hasRole("principal", "dos") ? [{ name: "Analytics", path: "/analytics", icon: BarChart3 }] : []),
+    ...(hasRole("teacher", "discipline_staff")
+      ? [{ name: "Report Incident", path: "/report", icon: AlertTriangle }]
+      : []),
+    ...(hasRole("dod")
+      ? [{ name: "Reports", path: "/reports", icon: FileText }]
+      : []),
+    ...(hasRole("principal", "dos")
+      ? [{ name: "Analytics", path: "/analytics", icon: BarChart3 }]
+      : []),
   ];
 
   const admin = [
-    ...(hasRole("principal") ? [{ name: "Users", path: "/user-management", icon: Shield }] : []),
-    ...(hasRole("principal", "dos", "dod") ? [{ name: "Audit Logs", path: "/audit-logs", icon: ScrollText }] : []),
+    ...(hasRole("principal")
+      ? [{ name: "Users", path: "/user-management", icon: Shield }]
+      : []),
+    ...(hasRole("principal", "dos", "dod")
+      ? [{ name: "Audit Logs", path: "/audit-logs", icon: ScrollText }]
+      : []),
     { name: "About", path: "/about", icon: Info },
   ];
 
@@ -59,7 +84,7 @@ const AppSidebar = ({ unreadCount = 0 }: AppSidebarProps) => {
         )}
         <SidebarGroupContent>
           <SidebarMenu>
-            {items.map(item => {
+            {items.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.path;
               return (
@@ -68,13 +93,20 @@ const AppSidebar = ({ unreadCount = 0 }: AppSidebarProps) => {
                     asChild
                     isActive={isActive}
                     tooltip={item.name}
-  className="h-10 rounded-xl text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-[0_8px_24px_-12px_hsl(var(--primary))]"
+                    className="h-10 rounded-xl text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-[0_8px_24px_-12px_hsl(var(--primary))]"
                   >
                     <Link to={item.path} className="flex items-center gap-3">
                       <Icon className="h-[18px] w-[18px] shrink-0" />
-                      {!collapsed && <span className="truncate text-sm font-medium">{item.name}</span>}
+                      {!collapsed && (
+                        <span className="truncate text-sm font-medium">
+                          {item.name}
+                        </span>
+                      )}
                       {!collapsed && "badge" in item && item.badge ? (
-                        <Badge variant="destructive" className="ml-auto h-5 min-w-5 justify-center px-1 text-[10px]">
+                        <Badge
+                          variant="destructive"
+                          className="ml-auto h-5 min-w-5 justify-center px-1 text-[10px]"
+                        >
                           {item.badge}
                         </Badge>
                       ) : null}
@@ -98,8 +130,12 @@ const AppSidebar = ({ unreadCount = 0 }: AppSidebarProps) => {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate font-display text-sm font-bold text-sidebar-foreground">SDMS</p>
-              <p className="truncate text-[11px] text-sidebar-foreground/50">Ecole des Sciences Byimana</p>
+              <p className="truncate font-display text-sm font-bold text-sidebar-foreground">
+                SDMS
+              </p>
+              <p className="truncate text-[11px] text-sidebar-foreground/50">
+                Ecole des Sciences Byimana
+              </p>
             </div>
           )}
         </Link>

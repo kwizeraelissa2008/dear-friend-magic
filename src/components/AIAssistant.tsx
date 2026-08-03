@@ -17,11 +17,42 @@ const NAV_MARKER = /<<NAVIGATE:(\[[\s\S]*?\])>>/;
 
 // Role-based capability hints shown in the empty state
 const ROLE_HINTS: Record<string, { title: string; suggestions: string[] }> = {
-  principal: { title: "Principal Agent", suggestions: ["Show pending user approvals", "List recent incidents", "Schedule a new event"] },
-  dod: { title: "Dean of Discipline Agent", suggestions: ["List pending incidents", "Grant permission to a student", "Approve incident"] },
-  dos: { title: "Director of Studies Agent", suggestions: ["Add a new student", "Create a new class", "Show class list"] },
-  teacher: { title: "Teacher Agent", suggestions: ["Report a minor incident", "Show my recent reports", "Find a student"] },
-  discipline_staff: { title: "Discipline Staff Agent", suggestions: ["Report an incident", "Find a student", "Show pending incidents"] },
+  principal: {
+    title: "Principal Agent",
+    suggestions: [
+      "Show pending user approvals",
+      "List recent incidents",
+      "Schedule a new event",
+    ],
+  },
+  dod: {
+    title: "Dean of Discipline Agent",
+    suggestions: [
+      "List pending incidents",
+      "Grant permission to a student",
+      "Approve incident",
+    ],
+  },
+  dos: {
+    title: "Director of Studies Agent",
+    suggestions: ["Add a new student", "Create a new class", "Show class list"],
+  },
+  teacher: {
+    title: "Teacher Agent",
+    suggestions: [
+      "Report a minor incident",
+      "Show my recent reports",
+      "Find a student",
+    ],
+  },
+  discipline_staff: {
+    title: "Discipline Staff Agent",
+    suggestions: [
+      "Report an incident",
+      "Find a student",
+      "Show pending incidents",
+    ],
+  },
 };
 
 const AIAssistant = () => {
@@ -44,7 +75,7 @@ const AIAssistant = () => {
   // Remove common markdown so the assistant always renders as clean plain text.
   const stripMarkdown = (s: string) =>
     s
-      .replace(/```[\s\S]*?```/g, m => m.replace(/```\w*\n?|```/g, ""))
+      .replace(/```[\s\S]*?```/g, (m) => m.replace(/```\w*\n?|```/g, ""))
       .replace(/`([^`]+)`/g, "$1")
       .replace(/\*\*([^*]+)\*\*/g, "$1")
       .replace(/__([^_]+)__/g, "$1")
@@ -81,15 +112,19 @@ const AIAssistant = () => {
             assistantContent += delta;
             // Hide the navigation marker from UI while streaming
             const display = stripMarkdown(stripNavMarker(assistantContent));
-            setMessages(prev => {
+            setMessages((prev) => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {
-                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: display } : m);
+                return prev.map((m, i) =>
+                  i === prev.length - 1 ? { ...m, content: display } : m,
+                );
               }
               return [...prev, { role: "assistant", content: display }];
             });
           }
-        } catch { /* partial */ }
+        } catch {
+          /* partial */
+        }
       }
     }
 
@@ -97,10 +132,12 @@ const AIAssistant = () => {
     const navMatch = assistantContent.match(NAV_MARKER);
     if (navMatch) {
       try {
-        const steps: { path: string; description: string }[] = JSON.parse(navMatch[1]);
+        const steps: { path: string; description: string }[] = JSON.parse(
+          navMatch[1],
+        );
         for (const step of steps) {
           if (typeof step?.path === "string" && step.path.startsWith("/")) {
-            await new Promise(r => setTimeout(r, 400));
+            await new Promise((r) => setTimeout(r, 400));
             navigate(step.path);
             toast.success(`Navigated to ${step.path}`);
           }
@@ -117,7 +154,7 @@ const AIAssistant = () => {
     const text = overrideInput || input.trim();
     if (!text || isLoading) return;
     const userMsg: Message = { role: "user", content: text };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     if (!overrideInput) setInput("");
     setIsLoading(true);
 
@@ -142,9 +179,15 @@ const AIAssistant = () => {
       await streamResponse(resp);
     } catch (e: any) {
       toast.error(e.message || "AI Assistant error");
-      setMessages(prev => {
+      setMessages((prev) => {
         if (prev[prev.length - 1]?.role !== "assistant") {
-          return [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }];
+          return [
+            ...prev,
+            {
+              role: "assistant",
+              content: "Sorry, I encountered an error. Please try again.",
+            },
+          ];
         }
         return prev;
       });
@@ -164,14 +207,28 @@ const AIAssistant = () => {
     }
 
     const isImage = file.type.startsWith("image/");
-    const isText = ["text/csv", "text/plain", "application/json", "text/tab-separated-values"].includes(file.type) ||
-      [".csv", ".txt", ".json", ".tsv", ".md"].some(ext => file.name.endsWith(ext));
-    const isExcel = ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"].includes(file.type) ||
-      [".xls", ".xlsx"].some(ext => file.name.endsWith(ext));
+    const isText =
+      [
+        "text/csv",
+        "text/plain",
+        "application/json",
+        "text/tab-separated-values",
+      ].includes(file.type) ||
+      [".csv", ".txt", ".json", ".tsv", ".md"].some((ext) =>
+        file.name.endsWith(ext),
+      );
+    const isExcel =
+      [
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ].includes(file.type) ||
+      [".xls", ".xlsx"].some((ext) => file.name.endsWith(ext));
     const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
 
     if (!isImage && !isText && !isExcel && !isPdf) {
-      toast.error("Unsupported file type. Please upload CSV, TXT, JSON, Excel, PDF, or image files.");
+      toast.error(
+        "Unsupported file type. Please upload CSV, TXT, JSON, Excel, PDF, or image files.",
+      );
       return;
     }
 
@@ -197,7 +254,10 @@ const AIAssistant = () => {
       }
 
       // Check if this looks like student data for direct import
-      const looksLikeStudentData = /student[_\s]?id|admission|name.*gender|gender.*name/i.test(content.slice(0, 500));
+      const looksLikeStudentData =
+        /student[_\s]?id|admission|name.*gender|gender.*name/i.test(
+          content.slice(0, 500),
+        );
 
       if (looksLikeStudentData && (isText || isExcel)) {
         action = "parse_students";
@@ -206,12 +266,12 @@ const AIAssistant = () => {
       const userMsg: Message = {
         role: "user",
         content: `📎 Uploaded: **${file.name}** (${(file.size / 1024).toFixed(1)} KB)\n\n${
-          action === "parse_students" 
-            ? "Detected student data. Processing for import..." 
+          action === "parse_students"
+            ? "Detected student data. Processing for import..."
             : "Analyzing document content..."
         }`,
       };
-      setMessages(prev => [...prev, userMsg]);
+      setMessages((prev) => [...prev, userMsg]);
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -237,7 +297,13 @@ const AIAssistant = () => {
       await streamResponse(resp);
     } catch (e: any) {
       toast.error(e.message || "Failed to process document");
-      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't process that document. Please try again." }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I couldn't process that document. Please try again.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -246,17 +312,25 @@ const AIAssistant = () => {
 
   // Hide assistant when not logged in or on auth/reset routes
   const hiddenRoutes = ["/auth", "/reset-password"];
-  if (authLoading || !user || !userRole || hiddenRoutes.includes(location.pathname)) {
+  if (
+    authLoading ||
+    !user ||
+    !userRole ||
+    hiddenRoutes.includes(location.pathname)
+  ) {
     return null;
   }
 
-  const roleHint = ROLE_HINTS[userRole] || { title: "SDMS Agent", suggestions: ["Show system stats", "How can you help me?"] };
+  const roleHint = ROLE_HINTS[userRole] || {
+    title: "SDMS Agent",
+    suggestions: ["Show system stats", "How can you help me?"],
+  };
 
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-  className="fixed bottom-6 right-4 md:bottom-6 md:right-6 z-50 rounded-full w-12 h-12 md:w-14 md:h-14 shadow-lg"
+        className="fixed bottom-6 right-4 md:bottom-6 md:right-6 z-50 rounded-full w-12 h-12 md:w-14 md:h-14 shadow-lg"
         size="icon"
         title={`${roleHint.title} — click to open`}
       >
@@ -275,7 +349,12 @@ const AIAssistant = () => {
             <span className="text-[10px] opacity-80">{profile?.full_name}</span>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20"
+          onClick={() => setIsOpen(false)}
+        >
           <X className="w-4 h-4" />
         </Button>
       </div>
@@ -284,23 +363,42 @@ const AIAssistant = () => {
         {messages.length === 0 && (
           <div className="text-center py-6 space-y-2">
             <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Hi {profile?.full_name?.split(" ")[0] || "there"}! I'm your <strong>{roleHint.title}</strong>.</p>
+            <p className="text-sm text-muted-foreground">
+              Hi {profile?.full_name?.split(" ")[0] || "there"}! I'm your{" "}
+              <strong>{roleHint.title}</strong>.
+            </p>
             <p className="text-xs text-muted-foreground">
-              I can only perform actions allowed for your role ({userRole}). Ask me anything or upload a document.
+              I can only perform actions allowed for your role ({userRole}). Ask
+              me anything or upload a document.
             </p>
             <div className="flex flex-wrap gap-2 justify-center mt-3">
-              {roleHint.suggestions.map(q => (
-                <Button key={q} variant="outline" size="sm" className="text-xs" onClick={() => sendMessage(q)}>{q}</Button>
+              {roleHint.suggestions.map((q) => (
+                <Button
+                  key={q}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => sendMessage(q)}
+                >
+                  {q}
+                </Button>
               ))}
             </div>
           </div>
         )}
         <div className="space-y-3">
           {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-              }`}>
+            <div
+              key={i}
+              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                  m.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                }`}
+              >
                 <p className="whitespace-pre-wrap break-words">{m.content}</p>
               </div>
             </div>
@@ -321,15 +419,17 @@ const AIAssistant = () => {
           <Input
             placeholder="Ask something or upload a file..."
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") sendMessage(); }}
-  className="text-sm"
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") sendMessage();
+            }}
+            className="text-sm"
           />
           <input
             ref={fileInputRef}
             type="file"
             accept=".csv,.txt,.json,.xls,.xlsx,.pdf,.png,.jpg,.jpeg,.webp,.md,.tsv"
-  className="hidden"
+            className="hidden"
             onChange={handleFileUpload}
           />
           <Button
@@ -338,15 +438,22 @@ const AIAssistant = () => {
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             title="Upload document (CSV, Excel, PDF, Image)"
-  className="shrink-0"
+            className="shrink-0"
           >
             <Upload className="w-4 h-4" />
           </Button>
-          <Button size="icon" onClick={() => sendMessage()} disabled={isLoading || !input.trim()} className="shrink-0">
+          <Button
+            size="icon"
+            onClick={() => sendMessage()}
+            disabled={isLoading || !input.trim()}
+            className="shrink-0"
+          >
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1">Supports CSV, Excel, PDF, images, JSON, TXT</p>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Supports CSV, Excel, PDF, images, JSON, TXT
+        </p>
       </div>
     </div>
   );

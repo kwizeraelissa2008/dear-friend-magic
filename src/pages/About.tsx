@@ -1,18 +1,60 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Users, Shield, BarChart3, Bot, Heart } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  GraduationCap,
+  Users,
+  Shield,
+  BarChart3,
+  Bot,
+  Heart,
+} from "lucide-react";
 
 const About = () => {
   const features = [
-    { icon: Users, title: "Student Information System", description: "Comprehensive student profiles with photo, marks, and class management." },
-    { icon: Shield, title: "Discipline Management", description: "Track incidents, deduct marks, and manage student permissions effectively." },
-    { icon: BarChart3, title: "Analytics & Reports", description: "Visualize discipline trends and generate detailed reports." },
-    { icon: GraduationCap, title: "Role-Based Access", description: "Secure access for DOD, DOS, Principal, Teachers, and Discipline Staff." },
-    { icon: Bot, title: "AI Assistant", description: "AI-powered assistant to help staff perform tasks faster and get instant guidance." },
+    {
+      icon: Users,
+      title: "Student Information System",
+      description:
+        "Comprehensive student profiles with photo, marks, and class management.",
+    },
+    {
+      icon: Shield,
+      title: "Discipline Management",
+      description:
+        "Track incidents, deduct marks, and manage student permissions effectively.",
+    },
+    {
+      icon: BarChart3,
+      title: "Analytics & Reports",
+      description: "Visualize discipline trends and generate detailed reports.",
+    },
+    {
+      icon: GraduationCap,
+      title: "Role-Based Access",
+      description:
+        "Secure access for DOD, DOS, Principal, Teachers, and Discipline Staff.",
+    },
+    {
+      icon: Bot,
+      title: "AI Assistant",
+      description:
+        "AI-powered assistant to help staff perform tasks faster and get instant guidance.",
+    },
   ];
 
   const team = [
-    { name: "Kwizera Elissa", role: "Founder & Lead Developer", description: "Student at Ecole des Sciences Byimana, passionate about using technology to improve school management." },
+    {
+      name: "Kwizera Elissa",
+      role: "Founder & Lead Developer",
+      description:
+        "Student at Ecole des Sciences Byimana, passionate about using technology to improve school management.",
+    },
   ];
 
   return (
@@ -24,8 +66,9 @@ const About = () => {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">About SDMS</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            School Discipline Management System is a comprehensive platform designed to help
-            schools manage student discipline, track incidents, and maintain accurate records.
+            School Discipline Management System is a comprehensive platform
+            designed to help schools manage student discipline, track incidents,
+            and maintain accurate records.
           </p>
         </div>
 
@@ -41,7 +84,9 @@ const About = () => {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{feature.title}</CardTitle>
-                      <CardDescription className="mt-1">{feature.description}</CardDescription>
+                      <CardDescription className="mt-1">
+                        {feature.description}
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -59,16 +104,26 @@ const About = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {team.map((member) => (
-              <div key={member.name} className="flex items-start gap-4 p-4 rounded-lg bg-muted/50">
+              <div
+                key={member.name}
+                className="flex items-start gap-4 p-4 rounded-lg bg-muted/50"
+              >
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-primary-foreground font-bold text-lg">
-                    {member.name.split(" ").map(n => n[0]).join("")}
+                    {member.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-semibold">{member.name}</h3>
-                  <p className="text-sm text-primary font-medium">{member.role}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{member.description}</p>
+                  <p className="text-sm text-primary font-medium">
+                    {member.role}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {member.description}
+                  </p>
                 </div>
               </div>
             ))}

@@ -2,8 +2,13 @@ import { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
-interface Props { children: ReactNode }
-interface State { hasError: boolean; error: Error | null }
+interface Props {
+  children: ReactNode;
+}
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
 
 class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
@@ -31,7 +36,8 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
             <h1 className="text-2xl font-bold">Something went wrong</h1>
             <p className="text-muted-foreground text-sm">
-              An unexpected error occurred. You can return to the homepage and try again.
+              An unexpected error occurred. You can return to the homepage and
+              try again.
             </p>
             {this.state.error?.message && (
               <pre className="text-xs text-left bg-muted p-3 rounded-md overflow-auto max-h-32">

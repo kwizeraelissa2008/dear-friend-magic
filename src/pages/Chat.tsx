@@ -7,8 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MessageSquare, Send, Plus, Users, User, Loader2, ArrowLeft } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  MessageSquare,
+  Send,
+  Plus,
+  Users,
+  User,
+  Loader2,
+  ArrowLeft,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -48,7 +62,9 @@ const Chat = () => {
   const [searchUser, setSearchUser] = useState("");
   const [showChatList, setShowChatList] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [profilesMap, setProfilesMap] = useState<Map<string, { full_name: string; role?: string }>>(new Map());
+  const [profilesMap, setProfilesMap] = useState<
+    Map<string, { full_name: string; role?: string }>
+  >(new Map());
 
   useEffect(() => {
     if (user) {
@@ -64,23 +80,29 @@ const Chat = () => {
     if (!activeConv) return;
     const channel = supabase
       .channel(`messages-${activeConv}`)
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `conversation_id=eq.${activeConv}`,
-      }, (payload) => {
-        const msg = payload.new as Message;
-        const p = profilesMap.get(msg.sender_id);
-        msg.sender_name = p?.full_name || "Unknown";
-        msg.sender_role = p?.role;
-        setMessages(prev => {
-          if (prev.some(m => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-      })
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${activeConv}`,
+        },
+        (payload) => {
+          const msg = payload.new as Message;
+          const p = profilesMap.get(msg.sender_id);
+          msg.sender_name = p?.full_name || "Unknown";
+          msg.sender_role = p?.role;
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        },
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [activeConv, profilesMap]);
 
   useEffect(() => {
@@ -92,9 +114,9 @@ const Chat = () => {
       supabase.from("profiles").select("id, full_name"),
       supabase.from("user_roles").select("user_id, role"),
     ]);
-    const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
+    const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
     const map = new Map<string, { full_name: string; role?: string }>();
-    profiles?.forEach(p => {
+    profiles?.forEach((p) => {
       map.set(p.id, { full_name: p.full_name, role: roleMap.get(p.id) });
     });
     setProfilesMap(map);
@@ -108,7 +130,7 @@ const Chat = () => {
       .eq("user_id", user!.id);
 
     if (memberRows && memberRows.length > 0) {
-      const convIds = memberRows.map(m => m.conversation_id);
+      const convIds = memberRows.map((m) => m.conversation_id);
       const { data: convs } = await supabase
         .from("conversations")
         .select("*")
@@ -116,20 +138,24 @@ const Chat = () => {
         .order("updated_at", { ascending: false });
 
       if (convs) {
-        const enriched = await Promise.all(convs.map(async (c) => {
-          if (c.type === "private" && !c.name) {
-            const { data: members } = await supabase
-              .from("conversation_members")
-              .select("user_id")
-              .eq("conversation_id", c.id);
-            const otherId = members?.find(m => m.user_id !== user!.id)?.user_id;
-            if (otherId) {
-              const p = profilesMap.get(otherId);
-              return { ...c, name: p?.full_name || "Private Chat" };
+        const enriched = await Promise.all(
+          convs.map(async (c) => {
+            if (c.type === "private" && !c.name) {
+              const { data: members } = await supabase
+                .from("conversation_members")
+                .select("user_id")
+                .eq("conversation_id", c.id);
+              const otherId = members?.find(
+                (m) => m.user_id !== user!.id,
+              )?.user_id;
+              if (otherId) {
+                const p = profilesMap.get(otherId);
+                return { ...c, name: p?.full_name || "Private Chat" };
+              }
             }
-          }
-          return c;
-        }));
+            return c;
+          }),
+        );
         setConversations(enriched);
         if (!activeConv && enriched.length > 0) {
           setActiveConv(enriched[0].id);
@@ -148,9 +174,13 @@ const Chat = () => {
       .order("created_at", { ascending: true })
       .limit(200);
 
-    const enriched = (data || []).map(m => {
+    const enriched = (data || []).map((m) => {
       const p = profilesMap.get(m.sender_id);
-      return { ...m, sender_name: p?.full_name || "Unknown", sender_role: p?.role };
+      return {
+        ...m,
+        sender_name: p?.full_name || "Unknown",
+        sender_role: p?.role,
+      };
     });
     setMessages(enriched);
   };
@@ -181,10 +211,17 @@ const Chat = () => {
       .from("conversation_members")
       .select("conversation_id")
       .eq("user_id", otherUser.id);
-    const myIds = new Set(myConvs?.map(c => c.conversation_id) || []);
-    const common = theirConvs?.filter(c => myIds.has(c.conversation_id)).map(c => c.conversation_id) || [];
+    const myIds = new Set(myConvs?.map((c) => c.conversation_id) || []);
+    const common =
+      theirConvs
+        ?.filter((c) => myIds.has(c.conversation_id))
+        .map((c) => c.conversation_id) || [];
     for (const cid of common) {
-      const { data: conv } = await supabase.from("conversations").select("type").eq("id", cid).single();
+      const { data: conv } = await supabase
+        .from("conversations")
+        .select("type")
+        .eq("id", cid)
+        .single();
       if (conv?.type === "private") {
         setActiveConv(cid);
         setShowChatList(false);
@@ -196,12 +233,20 @@ const Chat = () => {
     const { error: convError } = await supabase
       .from("conversations")
       .insert({ id: newId, type: "private", name: null, created_by: user.id });
-    if (convError) { toast.error("Failed to create conversation: " + convError.message); return; }
-    const { error: memberError } = await supabase.from("conversation_members").insert([
-      { conversation_id: newId, user_id: user.id },
-      { conversation_id: newId, user_id: otherUser.id },
-    ]);
-    if (memberError) { toast.error("Failed to add members: " + memberError.message); return; }
+    if (convError) {
+      toast.error("Failed to create conversation: " + convError.message);
+      return;
+    }
+    const { error: memberError } = await supabase
+      .from("conversation_members")
+      .insert([
+        { conversation_id: newId, user_id: user.id },
+        { conversation_id: newId, user_id: otherUser.id },
+      ]);
+    if (memberError) {
+      toast.error("Failed to add members: " + memberError.message);
+      return;
+    }
     setNewChatDialog(false);
     await fetchConversations();
     setActiveConv(newId);
@@ -210,17 +255,28 @@ const Chat = () => {
   };
 
   const loadAllUsers = async () => {
-    const { data } = await supabase.from("profiles").select("id, full_name, email").neq("id", user!.id);
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .neq("id", user!.id);
     setAllUsers(data || []);
   };
 
-  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  const formatRole = (role?: string) => role ? role.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  const formatRole = (role?: string) =>
+    role ? role.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 
-  const activeConvData = conversations.find(c => c.id === activeConv);
-  const filteredUsers = allUsers.filter(u =>
-    u.full_name.toLowerCase().includes(searchUser.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchUser.toLowerCase())
+  const activeConvData = conversations.find((c) => c.id === activeConv);
+  const filteredUsers = allUsers.filter(
+    (u) =>
+      u.full_name.toLowerCase().includes(searchUser.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchUser.toLowerCase()),
   );
 
   const selectConversation = (id: string) => {
@@ -232,34 +288,65 @@ const Chat = () => {
     <DashboardLayout>
       <div className="flex gap-4 h-[calc(100vh-8rem)]">
         {/* Chat list - hidden on mobile when viewing a conversation */}
-        <Card className={`w-full md:w-80 md:shrink-0 flex flex-col ${!showChatList ? "hidden md:flex" : "flex"}`}>
+        <Card
+          className={`w-full md:w-80 md:shrink-0 flex flex-col ${!showChatList ? "hidden md:flex" : "flex"}`}
+        >
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <MessageSquare className="w-5 h-5" /> Chats
             </CardTitle>
-            <Dialog open={newChatDialog} onOpenChange={(open) => { setNewChatDialog(open); if (open) loadAllUsers(); }}>
+            <Dialog
+              open={newChatDialog}
+              onOpenChange={(open) => {
+                setNewChatDialog(open);
+                if (open) loadAllUsers();
+              }}
+            >
               <DialogTrigger asChild>
-                <Button size="icon" variant="ghost"><Plus className="w-4 h-4" /></Button>
+                <Button size="icon" variant="ghost">
+                  <Plus className="w-4 h-4" />
+                </Button>
               </DialogTrigger>
               <DialogContent className="max-w-[calc(100vw-2rem)]">
-                <DialogHeader><DialogTitle>Start Private Chat</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>Start Private Chat</DialogTitle>
+                </DialogHeader>
                 <div className="space-y-4">
-                  <Input placeholder="Search users..." value={searchUser} onChange={e => setSearchUser(e.target.value)} />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchUser}
+                    onChange={(e) => setSearchUser(e.target.value)}
+                  />
                   <ScrollArea className="h-64">
                     <div className="space-y-2">
                       {filteredUsers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">No users found</p>
-                      ) : filteredUsers.map(u => (
-                        <Button key={u.id} variant="ghost" className="w-full justify-start gap-3" onClick={() => startPrivateChat(u)}>
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(u.full_name)}</AvatarFallback>
-                          </Avatar>
-                          <div className="text-left min-w-0">
-                            <p className="text-sm font-medium truncate">{u.full_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                          </div>
-                        </Button>
-                      ))}
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No users found
+                        </p>
+                      ) : (
+                        filteredUsers.map((u) => (
+                          <Button
+                            key={u.id}
+                            variant="ghost"
+                            className="w-full justify-start gap-3"
+                            onClick={() => startPrivateChat(u)}
+                          >
+                            <Avatar className="w-8 h-8">
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                {getInitials(u.full_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-left min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {u.full_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {u.email}
+                              </p>
+                            </div>
+                          </Button>
+                        ))
+                      )}
                     </div>
                   </ScrollArea>
                 </div>
@@ -268,21 +355,38 @@ const Chat = () => {
           </CardHeader>
           <CardContent className="flex-1 p-2 overflow-auto">
             {isLoading ? (
-              <p className="text-center text-sm text-muted-foreground py-4">Loading...</p>
+              <p className="text-center text-sm text-muted-foreground py-4">
+                Loading...
+              </p>
             ) : conversations.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-4">No conversations yet</p>
+              <p className="text-center text-sm text-muted-foreground py-4">
+                No conversations yet
+              </p>
             ) : (
               <div className="space-y-1">
-                {conversations.map(c => (
+                {conversations.map((c) => (
                   <Button
                     key={c.id}
                     variant={activeConv === c.id ? "secondary" : "ghost"}
-  className="w-full justify-start gap-2 h-auto py-3"
+                    className="w-full justify-start gap-2 h-auto py-3"
                     onClick={() => selectConversation(c.id)}
                   >
-                    {c.type === "group" ? <Users className="w-4 h-4 shrink-0" /> : <User className="w-4 h-4 shrink-0" />}
-                    <span className="truncate text-left">{c.name || "Private Chat"}</span>
-                    {c.type === "group" && <Badge variant="outline" className="ml-auto text-xs shrink-0">Group</Badge>}
+                    {c.type === "group" ? (
+                      <Users className="w-4 h-4 shrink-0" />
+                    ) : (
+                      <User className="w-4 h-4 shrink-0" />
+                    )}
+                    <span className="truncate text-left">
+                      {c.name || "Private Chat"}
+                    </span>
+                    {c.type === "group" && (
+                      <Badge
+                        variant="outline"
+                        className="ml-auto text-xs shrink-0"
+                      >
+                        Group
+                      </Badge>
+                    )}
                   </Button>
                 ))}
               </div>
@@ -291,41 +395,73 @@ const Chat = () => {
         </Card>
 
         {/* Chat panel - hidden on mobile when viewing chat list */}
-        <Card className={`flex-1 flex flex-col min-w-0 ${showChatList ? "hidden md:flex" : "flex"}`}>
+        <Card
+          className={`flex-1 flex flex-col min-w-0 ${showChatList ? "hidden md:flex" : "flex"}`}
+        >
           {activeConv ? (
             <>
               <CardHeader className="pb-2 border-b flex flex-row items-center gap-2">
-                <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setShowChatList(true)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden shrink-0"
+                  onClick={() => setShowChatList(true)}
+                >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <CardTitle className="text-lg truncate">
                   {activeConvData?.name || "Chat"}
-                  {activeConvData?.type === "group" && <Badge variant="outline" className="ml-2 text-xs">Group</Badge>}
+                  {activeConvData?.type === "group" && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      Group
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 p-3 md:p-4 overflow-auto">
                 <div className="space-y-4">
                   {messages.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-12">No messages yet. Start the conversation!</p>
-                  ) : messages.map(m => {
-                    const isMe = m.sender_id === user?.id;
-                    return (
-                      <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[85%] md:max-w-[70%] ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"} rounded-lg p-3 space-y-1`}>
-                          {!isMe && (
-                            <p className="text-xs font-semibold">
-                              {m.sender_name}
-                              {m.sender_role && <span className="font-normal opacity-70"> ({formatRole(m.sender_role)})</span>}
+                    <p className="text-center text-sm text-muted-foreground py-12">
+                      No messages yet. Start the conversation!
+                    </p>
+                  ) : (
+                    messages.map((m) => {
+                      const isMe = m.sender_id === user?.id;
+                      return (
+                        <div
+                          key={m.id}
+                          className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[85%] md:max-w-[70%] ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"} rounded-lg p-3 space-y-1`}
+                          >
+                            {!isMe && (
+                              <p className="text-xs font-semibold">
+                                {m.sender_name}
+                                {m.sender_role && (
+                                  <span className="font-normal opacity-70">
+                                    {" "}
+                                    ({formatRole(m.sender_role)})
+                                  </span>
+                                )}
+                              </p>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {m.content}
                             </p>
-                          )}
-                          <p className="text-sm whitespace-pre-wrap break-words">{m.content}</p>
-                          <p className={`text-xs ${isMe ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                            {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </p>
+                            <p
+                              className={`text-xs ${isMe ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                            >
+                              {new Date(m.created_at).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               </CardContent>
@@ -333,12 +469,26 @@ const Chat = () => {
                 <Input
                   placeholder="Type a message..."
                   value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-  className="text-sm"
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  className="text-sm"
                 />
-                <Button onClick={handleSend} disabled={isSending || !newMessage.trim()} size="icon" className="shrink-0">
-                  {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                <Button
+                  onClick={handleSend}
+                  disabled={isSending || !newMessage.trim()}
+                  size="icon"
+                  className="shrink-0"
+                >
+                  {isSending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </>
@@ -347,7 +497,9 @@ const Chat = () => {
               <div className="text-center">
                 <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold">Select a conversation</h3>
-                <p className="text-muted-foreground">Choose a chat or start a new one</p>
+                <p className="text-muted-foreground">
+                  Choose a chat or start a new one
+                </p>
               </div>
             </CardContent>
           )}

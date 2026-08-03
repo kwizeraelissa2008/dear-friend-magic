@@ -123,7 +123,7 @@
   }
 
   html {
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -131,39 +131,66 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight text-foreground;
+    font-family: 'Space Grotesk', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
-  /* Subtle radial brand glow for landing hero */
+  .font-display {
+    font-family: 'Space Grotesk', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Midnight aurora glow for landing hero */
   .bg-hero-glow {
     background:
-      radial-gradient(800px 400px at 15% 0%, hsl(221 83% 53% / 0.08), transparent 60%),
-      radial-gradient(700px 400px at 90% 10%, hsl(160 84% 39% / 0.06), transparent 65%),
+      radial-gradient(900px 480px at 12% -5%, hsl(243 75% 59% / 0.16), transparent 62%),
+      radial-gradient(760px 460px at 92% 6%, hsl(252 83% 68% / 0.12), transparent 65%),
+      radial-gradient(700px 420px at 50% 110%, hsl(160 84% 39% / 0.07), transparent 60%),
       hsl(var(--background));
+  }
+
+  .bg-midnight {
+    background-image: var(--gradient-midnight);
+  }
+
+  .text-gradient {
+    background-image: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   /* Tech dot matrix */
   .bg-dot-grid {
-    background-image: radial-gradient(hsl(222 47% 11% / 0.06) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(243 60% 30% / 0.07) 1px, transparent 1px);
     background-size: 22px 22px;
   }
 
   /* App content surface */
   .bg-app {
-    background-color: hsl(210 40% 98%);
+    background-color: hsl(var(--background));
+    background-image: radial-gradient(700px 340px at 100% 0%, hsl(243 75% 59% / 0.05), transparent 60%);
   }
 
   /* Cards */
   .card-elevated {
-    @apply bg-card border border-border rounded-xl;
+    @apply bg-card border border-border rounded-2xl;
     box-shadow: var(--shadow-sm);
   }
+
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
 
   /* Activity timeline vertical track */
   .timeline-track {

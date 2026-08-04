@@ -128,7 +128,7 @@ const Analytics = () => {
             Loading analytics...
           </p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 stagger">
             <Card>
               <CardHeader>
                 <CardTitle>Incidents by Severity</CardTitle>

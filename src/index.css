@@ -7,65 +7,65 @@
 @layer base {
   :root {
     /* Surfaces — unified midnight navy across the whole app */
-    --background: 240 47% 6%;
-    --foreground: 240 40% 97%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 240 44% 10%;
-    --card-foreground: 240 40% 97%;
+    --card: 222 44% 15%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 44% 10%;
-    --popover-foreground: 240 40% 97%;
+    --popover: 222 44% 15%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 248 84% 68%;
-    --primary-foreground: 240 47% 8%;
-    --primary-glow: 252 83% 74%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 94% 68%;
 
-    --secondary: 240 34% 18%;
-    --secondary-foreground: 240 40% 97%;
+    --secondary: 217 33% 24%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 34% 15%;
-    --muted-foreground: 240 16% 74%;
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 76%;
 
     --accent: 160 84% 45%;
-    --accent-foreground: 240 47% 8%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 30% 20%;
-    --input: 240 30% 20%;
-    --ring: 248 84% 68%;
+    --border: 217 33% 26%;
+    --input: 217 33% 26%;
+    --ring: 217 91% 60%;
 
     --radius: 0.875rem;
 
     --success: 160 84% 45%;
-    --success-foreground: 240 47% 8%;
+    --success-foreground: 222 47% 11%;
 
     --warning: 38 92% 58%;
-    --warning-foreground: 240 47% 8%;
+    --warning-foreground: 222 47% 11%;
 
-    --info: 248 84% 68%;
-    --info-foreground: 240 47% 8%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
 
     /* Sidebar — same midnight shell */
-    --sidebar-background: 240 47% 5%;
-    --sidebar-foreground: 240 40% 96%;
-    --sidebar-primary: 248 84% 68%;
-    --sidebar-primary-foreground: 240 47% 8%;
-    --sidebar-accent: 240 38% 14%;
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 34% 18%;
-    --sidebar-ring: 248 84% 68%;
+    --sidebar-border: 217 33% 24%;
+    --sidebar-ring: 217 91% 60%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(248 84% 68%), hsl(252 83% 74%));
-    --gradient-midnight: linear-gradient(150deg, hsl(240 47% 6%), hsl(240 52% 12%) 55%, hsl(243 60% 20%));
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    --gradient-midnight: linear-gradient(150deg, hsl(222 47% 11%), hsl(220 50% 16%) 55%, hsl(221 60% 24%));
     --gradient-accent: linear-gradient(135deg, hsl(160 84% 45%), hsl(158 64% 56%));
 
     /* Elevation */
-    --shadow-xs: 0 1px 2px 0 hsl(240 60% 2% / 0.4);
-    --shadow-sm: 0 1px 3px 0 hsl(240 60% 2% / 0.5), 0 1px 2px -1px hsl(240 60% 2% / 0.4);
-    --shadow: 0 8px 24px -10px hsl(240 60% 2% / 0.6);
-    --shadow-lg: 0 28px 60px -20px hsl(240 60% 2% / 0.7);
+    --shadow-xs: 0 1px 2px 0 hsl(222 60% 4% / 0.4);
+    --shadow-sm: 0 1px 3px 0 hsl(222 60% 4% / 0.5), 0 1px 2px -1px hsl(222 60% 4% / 0.4);
+    --shadow: 0 8px 24px -10px hsl(222 60% 4% / 0.6);
+    --shadow-lg: 0 28px 60px -20px hsl(222 60% 4% / 0.7);
     --shadow-glow: 0 18px 40px -18px hsl(var(--primary) / 0.55);
 
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -73,47 +73,47 @@
 
 
   .dark {
-    --background: 240 47% 6%;
-    --foreground: 240 40% 97%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 240 44% 10%;
-    --card-foreground: 240 40% 97%;
+    --card: 222 44% 15%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 44% 10%;
-    --popover-foreground: 240 40% 97%;
+    --popover: 222 44% 15%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 248 84% 68%;
-    --primary-foreground: 240 47% 8%;
-    --primary-glow: 252 83% 74%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 94% 68%;
 
-    --secondary: 240 34% 18%;
-    --secondary-foreground: 240 40% 97%;
+    --secondary: 217 33% 24%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 34% 15%;
-    --muted-foreground: 240 16% 72%;
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 76%;
 
     --accent: 160 84% 45%;
-    --accent-foreground: 240 47% 8%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 30% 20%;
-    --input: 240 30% 20%;
-    --ring: 248 84% 68%;
+    --border: 217 33% 26%;
+    --input: 217 33% 26%;
+    --ring: 217 91% 60%;
 
     --success: 160 84% 45%;
     --warning: 38 92% 58%;
-    --info: 248 84% 68%;
+    --info: 217 91% 60%;
 
-    --sidebar-background: 240 47% 5%;
-    --sidebar-foreground: 240 40% 96%;
-    --sidebar-primary: 248 84% 68%;
-    --sidebar-primary-foreground: 240 47% 8%;
-    --sidebar-accent: 240 38% 14%;
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 34% 18%;
-    --sidebar-ring: 248 84% 68%;
+    --sidebar-border: 217 33% 24%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -154,8 +154,8 @@
   /* Midnight aurora glow for landing hero */
   .bg-hero-glow {
     background:
-      radial-gradient(900px 480px at 12% -5%, hsl(248 84% 68% / 0.18), transparent 62%),
-      radial-gradient(760px 460px at 92% 6%, hsl(252 83% 74% / 0.14), transparent 65%),
+      radial-gradient(900px 480px at 12% -5%, hsl(217 91% 60% / 0.20), transparent 62%),
+      radial-gradient(760px 460px at 92% 6%, hsl(213 94% 68% / 0.16), transparent 65%),
       radial-gradient(700px 420px at 50% 110%, hsl(160 84% 45% / 0.08), transparent 60%),
       hsl(var(--background));
   }

@@ -6,71 +6,71 @@
 
 @layer base {
   :root {
-    /* Surfaces — cool indigo-tinted neutrals */
-    --background: 240 33% 99%;
-    --foreground: 240 47% 8%;           /* #0a0a1a */
+    /* Surfaces — unified midnight navy across the whole app */
+    --background: 240 47% 6%;
+    --foreground: 240 40% 97%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 47% 8%;
+    --card: 240 44% 10%;
+    --card-foreground: 240 40% 97%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 47% 8%;
+    --popover: 240 44% 10%;
+    --popover-foreground: 240 40% 97%;
 
-    /* Primary — electric indigo #4f46e5 */
-    --primary: 243 75% 59%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 252 83% 68%;
+    --primary: 248 84% 68%;
+    --primary-foreground: 240 47% 8%;
+    --primary-glow: 252 83% 74%;
 
-    --secondary: 240 30% 95%;
-    --secondary-foreground: 240 44% 15%;
+    --secondary: 240 34% 18%;
+    --secondary-foreground: 240 40% 97%;
 
-    --muted: 240 25% 96%;
-    --muted-foreground: 240 12% 40%;
+    --muted: 240 34% 15%;
+    --muted-foreground: 240 16% 74%;
 
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 160 84% 45%;
+    --accent-foreground: 240 47% 8%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 22% 90%;
-    --input: 240 22% 90%;
-    --ring: 243 75% 59%;
+    --border: 240 30% 20%;
+    --input: 240 30% 20%;
+    --ring: 248 84% 68%;
 
     --radius: 0.875rem;
 
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    --success: 160 84% 45%;
+    --success-foreground: 240 47% 8%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 38 92% 58%;
+    --warning-foreground: 240 47% 8%;
 
-    --info: 243 75% 59%;
-    --info-foreground: 0 0% 100%;
+    --info: 248 84% 68%;
+    --info-foreground: 240 47% 8%;
 
-    /* Sidebar — midnight navy shell */
-    --sidebar-background: 240 47% 7%;   /* #0a0a1a */
+    /* Sidebar — same midnight shell */
+    --sidebar-background: 240 47% 5%;
     --sidebar-foreground: 240 40% 96%;
-    --sidebar-primary: 243 75% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 42% 16%;      /* #141432 */
+    --sidebar-primary: 248 84% 68%;
+    --sidebar-primary-foreground: 240 47% 8%;
+    --sidebar-accent: 240 38% 14%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 40% 18%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-border: 240 34% 18%;
+    --sidebar-ring: 248 84% 68%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(243 75% 59%), hsl(252 83% 68%));
-    --gradient-midnight: linear-gradient(150deg, hsl(240 47% 7%), hsl(240 52% 14%) 55%, hsl(243 60% 22%));
-    --gradient-accent: linear-gradient(135deg, hsl(160 84% 39%), hsl(158 64% 52%));
+    --gradient-primary: linear-gradient(135deg, hsl(248 84% 68%), hsl(252 83% 74%));
+    --gradient-midnight: linear-gradient(150deg, hsl(240 47% 6%), hsl(240 52% 12%) 55%, hsl(243 60% 20%));
+    --gradient-accent: linear-gradient(135deg, hsl(160 84% 45%), hsl(158 64% 56%));
 
     /* Elevation */
-    --shadow-xs: 0 1px 2px 0 hsl(240 47% 8% / 0.04);
-    --shadow-sm: 0 1px 3px 0 hsl(240 47% 8% / 0.07), 0 1px 2px -1px hsl(240 47% 8% / 0.05);
-    --shadow: 0 8px 24px -10px hsl(240 47% 8% / 0.14);
-    --shadow-lg: 0 28px 60px -20px hsl(243 60% 25% / 0.28);
+    --shadow-xs: 0 1px 2px 0 hsl(240 60% 2% / 0.4);
+    --shadow-sm: 0 1px 3px 0 hsl(240 60% 2% / 0.5), 0 1px 2px -1px hsl(240 60% 2% / 0.4);
+    --shadow: 0 8px 24px -10px hsl(240 60% 2% / 0.6);
+    --shadow-lg: 0 28px 60px -20px hsl(240 60% 2% / 0.7);
     --shadow-glow: 0 18px 40px -18px hsl(var(--primary) / 0.55);
 
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
 
   .dark {
     --background: 240 47% 6%;
@@ -145,12 +145,18 @@
     font-family: 'Space Grotesk', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   }
 
+  /* Sail — decorative maritime wordmark font */
+  .font-brand {
+    font-family: 'Sail', 'Space Grotesk', cursive;
+    letter-spacing: 0.02em;
+  }
+
   /* Midnight aurora glow for landing hero */
   .bg-hero-glow {
     background:
-      radial-gradient(900px 480px at 12% -5%, hsl(243 75% 59% / 0.16), transparent 62%),
-      radial-gradient(760px 460px at 92% 6%, hsl(252 83% 68% / 0.12), transparent 65%),
-      radial-gradient(700px 420px at 50% 110%, hsl(160 84% 39% / 0.07), transparent 60%),
+      radial-gradient(900px 480px at 12% -5%, hsl(248 84% 68% / 0.18), transparent 62%),
+      radial-gradient(760px 460px at 92% 6%, hsl(252 83% 74% / 0.14), transparent 65%),
+      radial-gradient(700px 420px at 50% 110%, hsl(160 84% 45% / 0.08), transparent 60%),
       hsl(var(--background));
   }
 
@@ -167,15 +173,16 @@
 
   /* Tech dot matrix */
   .bg-dot-grid {
-    background-image: radial-gradient(hsl(243 60% 30% / 0.07) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(248 84% 78% / 0.08) 1px, transparent 1px);
     background-size: 22px 22px;
   }
 
   /* App content surface */
   .bg-app {
     background-color: hsl(var(--background));
-    background-image: radial-gradient(700px 340px at 100% 0%, hsl(243 75% 59% / 0.05), transparent 60%);
+    background-image: radial-gradient(700px 340px at 100% 0%, hsl(248 84% 68% / 0.08), transparent 60%);
   }
+
 
   /* Cards */
   .card-elevated {

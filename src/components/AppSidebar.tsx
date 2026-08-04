@@ -130,9 +130,10 @@ const AppSidebar = ({ unreadCount = 0 }: AppSidebarProps) => {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate font-display text-sm font-bold text-sidebar-foreground">
+              <p className="truncate font-brand text-base text-sidebar-foreground">
                 SDMS
               </p>
+
               <p className="truncate text-[11px] text-sidebar-foreground/50">
                 Ecole des Sciences Byimana
               </p>

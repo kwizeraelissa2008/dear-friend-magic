@@ -161,22 +161,22 @@ const Auth = () => {
   };
 
   const BrandPanel = () => (
-    <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground relative overflow-hidden">
+    <div className="hidden lg:flex flex-col justify-between p-12 bg-midnight border-r border-border text-foreground relative overflow-hidden">
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-[0.12]"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 20%, white 2px, transparent 2px), radial-gradient(circle at 80% 60%, white 2px, transparent 2px)",
+            "radial-gradient(circle at 20% 20%, hsl(var(--primary)) 2px, transparent 2px), radial-gradient(circle at 80% 60%, hsl(var(--accent)) 2px, transparent 2px)",
           backgroundSize: "60px 60px",
         }}
       />
       <div className="relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary-foreground/20 backdrop-blur rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-primary/20 text-primary backdrop-blur rounded-xl flex items-center justify-center">
             <GraduationCap className="w-7 h-7" />
           </div>
           <div>
-            <h2 className="font-bold text-lg leading-tight">
+            <h2 className="font-brand text-xl leading-tight">
               Ecole des Sciences
             </h2>
             <p className="text-sm opacity-90">Byimana</p>
@@ -194,11 +194,11 @@ const Auth = () => {
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4 pt-4">
-          <div className="bg-primary-foreground/10 backdrop-blur rounded-lg p-4 border border-primary-foreground/20">
+          <div className="bg-card/60 backdrop-blur rounded-xl p-4 border border-border">
             <p className="text-2xl font-bold">Secure</p>
             <p className="text-xs opacity-80">Controlled access</p>
           </div>
-          <div className="bg-primary-foreground/10 backdrop-blur rounded-lg p-4 border border-primary-foreground/20">
+          <div className="bg-card/60 backdrop-blur rounded-xl p-4 border border-border">
             <p className="text-2xl font-bold">Smart</p>
             <p className="text-xs opacity-80">AI-powered</p>
           </div>

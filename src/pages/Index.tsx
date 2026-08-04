@@ -127,17 +127,17 @@ const Landing = () => {
           aria-hidden
         />
         <div className="container relative mx-auto px-4 pt-16 pb-20 sm:pt-24 sm:pb-28 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 bg-white/5 text-primary-foreground/80 text-xs font-medium mb-6 backdrop-blur">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 bg-white/5 text-foreground/80 text-xs font-medium mb-6 backdrop-blur">
             <CheckCircle2 className="w-3.5 h-3.5" /> Built for Ecole des
             Sciences Byimana
           </div>
-          <h1 className="font-display text-4xl sm:text-6xl font-bold max-w-3xl mx-auto leading-[1.05] text-primary-foreground">
+          <h1 className="font-display text-4xl sm:text-6xl font-bold max-w-3xl mx-auto leading-[1.05] text-foreground">
             School discipline,
             <span className="block bg-gradient-to-r from-primary-foreground via-[hsl(252_83%_82%)] to-[hsl(160_84%_60%)] bg-clip-text text-transparent">
               managed intelligently.
             </span>
           </h1>
-          <p className="mt-5 text-base sm:text-lg text-primary-foreground/65 max-w-2xl mx-auto px-2">
+          <p className="mt-5 text-base sm:text-lg text-foreground/65 max-w-2xl mx-auto px-2">
             One secure platform for staff and leadership to record incidents,
             manage permissions, and act faster — assisted by a role-aware AI
             agent.
@@ -155,13 +155,13 @@ const Landing = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto rounded-full px-7 border-white/20 bg-white/5 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+                className="w-full sm:w-auto rounded-full px-7 border-white/20 bg-white/5 text-foreground hover:bg-white/10 hover:text-foreground"
               >
                 I already have an account
               </Button>
             </Link>
           </div>
-          <p className="mt-5 text-xs text-primary-foreground/45">
+          <p className="mt-5 text-xs text-foreground/45">
             New accounts require Principal approval before access.
           </p>
         </div>

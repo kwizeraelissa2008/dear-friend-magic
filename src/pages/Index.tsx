@@ -89,9 +89,10 @@ const Landing = () => {
               <GraduationCap className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="font-display font-bold text-sm sm:text-base leading-tight truncate">
+              <p className="font-brand text-base sm:text-lg leading-tight truncate">
                 Ecole des Sciences
               </p>
+
               <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 Byimana — SDMS
               </p>

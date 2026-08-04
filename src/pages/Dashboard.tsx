@@ -177,13 +177,13 @@ const Dashboard = () => {
         {isLoading ? (
           <StatsSkeleton />
         ) : (
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 stagger">
             {statCards.map((stat) => {
               const Icon = stat.icon;
               return (
                 <Card
                   key={stat.title}
-                  className="border border-border bg-card shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+                  className="stat-glow shine border border-border bg-card shadow-sm transition-all hover:-translate-y-1"
                 >
                   <CardContent className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-2">
@@ -209,7 +209,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 stagger">
           {/* Quick Actions */}
           <Card className="border border-border shadow-sm">
             <CardHeader className="pb-3">

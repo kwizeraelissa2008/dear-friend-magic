@@ -208,6 +208,10 @@
     background-clip: text;
     color: transparent;
   }
+  .page-title svg {
+    color: hsl(var(--primary));
+    -webkit-text-fill-color: hsl(var(--primary));
+  }
 
   /* Frosted glass surface */
   .glass {

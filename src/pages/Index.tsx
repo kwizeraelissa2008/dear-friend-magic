@@ -133,7 +133,7 @@ const Landing = () => {
           </div>
           <h1 className="font-display text-4xl sm:text-6xl font-bold max-w-3xl mx-auto leading-[1.05] text-foreground">
             School discipline,
-            <span className="block bg-gradient-to-r from-primary-foreground via-[hsl(252_83%_82%)] to-[hsl(160_84%_60%)] bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-foreground via-[hsl(252_83%_82%)] to-[hsl(160_84%_60%)] bg-clip-text text-transparent">
               managed intelligently.
             </span>
           </h1>
@@ -238,10 +238,10 @@ const Landing = () => {
             aria-hidden
           />
           <div className="relative">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold mb-3 text-primary-foreground">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold mb-3 text-foreground">
               Ready to begin?
             </h2>
-            <p className="text-sm text-primary-foreground/60 mb-7 max-w-md mx-auto">
+            <p className="text-sm text-foreground/60 mb-7 max-w-md mx-auto">
               Sign up in under a minute. The Principal will be notified to
               review your request.
             </p>

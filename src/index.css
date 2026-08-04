@@ -199,6 +199,103 @@
   }
 
 
+  /* ── Visual effects ─────────────────────────────── */
+
+  /* Gradient page titles */
+  .page-title {
+    background-image: linear-gradient(100deg, hsl(210 40% 99%), hsl(217 91% 72%) 55%, hsl(160 84% 60%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .page-title svg {
+    color: hsl(var(--primary));
+    -webkit-text-fill-color: hsl(var(--primary));
+  }
+
+  /* Frosted glass surface */
+  .glass {
+    background: linear-gradient(160deg, hsl(217 33% 24% / 0.55), hsl(222 47% 12% / 0.75));
+    backdrop-filter: blur(14px);
+    border: 1px solid hsl(217 33% 40% / 0.28);
+  }
+
+  /* Animated aurora orbs behind page content */
+  .aurora-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(90px);
+    pointer-events: none;
+    opacity: 0.5;
+    animation: orb-drift 18s ease-in-out infinite alternate;
+  }
+
+  @keyframes orb-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(24px, -30px, 0) scale(1.18); }
+  }
+
+  /* Shine sweep on hover */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 35%, hsl(0 0% 100% / 0.10) 48%, transparent 62%);
+    transform: translateX(-120%);
+    transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  .shine:hover::after {
+    transform: translateX(120%);
+  }
+
+  /* Gradient hairline on top of a card */
+  .top-accent {
+    position: relative;
+  }
+  .top-accent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.6), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .top-accent:hover::before {
+    opacity: 1;
+  }
+
+  /* Staggered entrance */
+  .stagger > * {
+    animation: fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.02s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.07s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.12s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.17s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.22s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.27s; }
+
+  /* Icon tile with brand gradient */
+  .icon-tile {
+    @apply flex items-center justify-center rounded-xl text-primary-foreground;
+    background-image: var(--gradient-primary);
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Glow ring for stat cards */
+  .stat-glow:hover {
+    box-shadow: var(--shadow-glow);
+    border-color: hsl(var(--primary) / 0.45);
+  }
+
   /* Activity timeline vertical track */
   .timeline-track {
     @apply relative pl-5;

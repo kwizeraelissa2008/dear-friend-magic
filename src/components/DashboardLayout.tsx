@@ -172,8 +172,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </header>
 
-          <main className="flex-1 p-4 pb-28 sm:p-6 lg:p-8 md:pb-10">
-            <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <main className="relative flex-1 overflow-hidden p-4 pb-28 sm:p-6 lg:p-8 md:pb-10">
+            <div
+              className="aurora-orb -left-24 top-10 h-72 w-72"
+              style={{ background: "hsl(217 91% 60% / 0.28)" }}
+              aria-hidden
+            />
+            <div
+              className="aurora-orb -right-16 top-1/3 h-80 w-80"
+              style={{ background: "hsl(160 84% 45% / 0.16)", animationDelay: "-6s" }}
+              aria-hidden
+            />
+            <div className="relative mx-auto w-full max-w-6xl animate-fade-in">
+              {children}
+            </div>
           </main>
         </div>
       </div>

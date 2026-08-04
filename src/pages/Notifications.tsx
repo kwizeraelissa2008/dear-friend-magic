@@ -88,7 +88,7 @@ const Notifications = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+            <h1 className="text-3xl font-bold page-title tracking-tight">Notifications</h1>
             <p className="text-muted-foreground">
               {unreadCount > 0
                 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`

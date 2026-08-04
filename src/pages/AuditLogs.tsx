@@ -116,7 +116,7 @@ const AuditLogs = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight flex items-center gap-2 text-foreground">
               <ScrollText className="w-7 h-7 text-primary" /> Audit Logs
             </h1>
             <p className="text-muted-foreground mt-1">

@@ -91,7 +91,7 @@ const SIS = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight">
               Student Information System
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -121,7 +121,7 @@ const SIS = () => {
             )}
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 stagger">
             {classes.map((classItem) => (
               <Card
                 key={classItem.id}

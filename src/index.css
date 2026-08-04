@@ -173,14 +173,14 @@
 
   /* Tech dot matrix */
   .bg-dot-grid {
-    background-image: radial-gradient(hsl(248 84% 78% / 0.08) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(217 91% 70% / 0.08) 1px, transparent 1px);
     background-size: 22px 22px;
   }
 
   /* App content surface */
   .bg-app {
     background-color: hsl(var(--background));
-    background-image: radial-gradient(700px 340px at 100% 0%, hsl(248 84% 68% / 0.08), transparent 60%);
+    background-image: radial-gradient(700px 340px at 100% 0%, hsl(217 91% 60% / 0.10), transparent 60%);
   }
 
 

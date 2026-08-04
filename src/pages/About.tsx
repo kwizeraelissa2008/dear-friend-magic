@@ -64,7 +64,7 @@ const About = () => {
           <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
             <GraduationCap className="w-10 h-10 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">About SDMS</h1>
+          <h1 className="text-3xl font-bold page-title tracking-tight">About SDMS</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             School Discipline Management System is a comprehensive platform
             designed to help schools manage student discipline, track incidents,

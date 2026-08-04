@@ -75,7 +75,7 @@ const ClassStudents = () => {
             </Button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{className}</h1>
+            <h1 className="text-3xl font-bold page-title tracking-tight">{className}</h1>
             <p className="text-muted-foreground">
               Student profiles and information
             </p>

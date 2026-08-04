@@ -229,7 +229,7 @@ const StudentProfile = () => {
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight flex-1">
+          <h1 className="text-3xl font-bold page-title tracking-tight flex-1">
             Student Profile
           </h1>
           {hasRole("dos") && (

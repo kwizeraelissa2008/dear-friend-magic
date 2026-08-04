@@ -233,7 +233,7 @@ const UserManagement = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight flex items-center gap-2 text-foreground">
               <Shield className="w-7 h-7 text-primary" /> User Management
             </h1>
             <p className="text-muted-foreground mt-1">

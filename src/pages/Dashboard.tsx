@@ -161,7 +161,7 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight text-foreground">
             Welcome, {profile?.full_name || "User"}
           </h1>
           <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-2 mt-2">

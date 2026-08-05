@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import heroBg from "@/assets/golden-rule-hero.png.asset.json";
 
 const features = [
   {

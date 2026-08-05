@@ -147,7 +147,7 @@ const Landing = () => {
           ))}
         </div>
 
-        <div className="container relative mx-auto px-4 pt-[36vw] pb-20 sm:pb-28 text-center">
+        <div className="container relative mx-auto px-4 pt-16 pb-20 sm:pt-24 sm:pb-28 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 bg-white/5 text-foreground/80 text-xs font-medium mb-6 backdrop-blur">
             <CheckCircle2 className="w-3.5 h-3.5" /> Built for Ecole des
             Sciences Byimana

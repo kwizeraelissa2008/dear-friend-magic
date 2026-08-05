@@ -114,7 +114,7 @@ const Landing = () => {
       </header>
 
       {/* Hero — midnight band */}
-      <section className="relative overflow-hidden bg-midnight">
+      <section className="relative overflow-hidden">
         <div
           className="absolute inset-0 bg-dot-grid opacity-[0.35]"
           aria-hidden
@@ -123,10 +123,30 @@ const Landing = () => {
           className="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full blur-3xl"
           style={{
             background:
-              "radial-gradient(circle, hsl(243 75% 59% / 0.45), transparent 65%)",
+              "radial-gradient(circle, hsl(190 90% 55% / 0.28), transparent 65%)",
           }}
           aria-hidden
         />
+        {/* Indicator card */}
+        <div
+          className="pointer-events-none absolute right-6 top-24 hidden w-52 rounded-2xl border border-white/10 bg-[hsl(215_40%_16%/0.75)] p-4 backdrop-blur lg:block"
+          aria-hidden
+        >
+          {[
+            { c: "hsl(45 93% 58%)", w: "w-24" },
+            { c: "hsl(199 89% 62%)", w: "w-32" },
+            { c: "hsl(158 64% 60%)", w: "w-20" },
+          ].map((r) => (
+            <div key={r.c} className="flex items-center gap-3 py-2">
+              <div className={`h-px flex-1 bg-white/15 ${r.w}`} />
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ background: r.c, boxShadow: `0 0 12px ${r.c}` }}
+              />
+            </div>
+          ))}
+        </div>
+
         <div className="container relative mx-auto px-4 pt-16 pb-20 sm:pt-24 sm:pb-28 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 bg-white/5 text-foreground/80 text-xs font-medium mb-6 backdrop-blur">
             <CheckCircle2 className="w-3.5 h-3.5" /> Built for Ecole des

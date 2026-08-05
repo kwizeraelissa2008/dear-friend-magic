@@ -214,7 +214,7 @@ const Auth = () => {
     return (
       <div className="min-h-screen grid lg:grid-cols-2">
         <BrandPanel />
-        <div className="flex items-center justify-center p-4 sm:p-8 bg-background">
+        <div className="flex items-center justify-center p-4 sm:p-8 bg-transparent">
           <Card className="w-full max-w-md border-0 shadow-none lg:shadow-lg">
             <CardHeader className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center lg:hidden">
@@ -267,7 +267,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <BrandPanel />
-      <div className="flex items-center justify-center p-4 sm:p-8 bg-background">
+      <div className="flex items-center justify-center p-4 sm:p-8 bg-transparent">
         <Card className="w-full max-w-md border-0 shadow-none lg:shadow-lg">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center lg:hidden">

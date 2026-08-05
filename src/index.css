@@ -152,7 +152,7 @@
     bottom: 12vh;
     height: 40vh;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
     opacity: 0.75;
     background-repeat: no-repeat;
     background-size: 100% 100%;
@@ -181,10 +181,9 @@
   /* Midnight aurora glow for landing hero */
   .bg-hero-glow {
     background:
-      radial-gradient(900px 480px at 12% -5%, hsl(217 91% 60% / 0.20), transparent 62%),
-      radial-gradient(760px 460px at 92% 6%, hsl(213 94% 68% / 0.16), transparent 65%),
-      radial-gradient(700px 420px at 50% 110%, hsl(160 84% 45% / 0.08), transparent 60%),
-      hsl(var(--background));
+      radial-gradient(900px 480px at 12% -5%, hsl(190 90% 55% / 0.14), transparent 62%),
+      radial-gradient(760px 460px at 92% 6%, hsl(45 90% 60% / 0.08), transparent 65%),
+      transparent;
   }
 
   .bg-midnight {
@@ -206,8 +205,8 @@
 
   /* App content surface */
   .bg-app {
-    background-color: hsl(var(--background));
-    background-image: radial-gradient(700px 340px at 100% 0%, hsl(217 91% 60% / 0.10), transparent 60%);
+    background-color: transparent;
+    background-image: radial-gradient(700px 340px at 100% 0%, hsl(190 90% 55% / 0.10), transparent 60%);
   }
 
 

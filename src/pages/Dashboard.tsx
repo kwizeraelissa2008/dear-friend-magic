@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { StatsSkeleton } from "@/components/Skeletons";
 import { toast } from "sonner";
+import heroBg from "@/assets/golden-rule-hero.png.asset.json";
 
 interface RecentActivity {
   id: string;
@@ -159,8 +160,21 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <div>
+      {/* Home background artwork */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-0"
+        aria-hidden
+      >
+        <img
+          src={heroBg.url}
+          alt=""
+          className="w-full aspect-[1024/559] max-h-[60vh] object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+      </div>
+
+      <div className="relative z-10 space-y-8">
+        <div className="pt-[26vw] sm:pt-[18vw] lg:pt-[14vw]">
           <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight text-foreground">
             Welcome, {profile?.full_name || "User"}
           </h1>
@@ -173,6 +187,7 @@ const Dashboard = () => {
             <span>School Discipline Management System</span>
           </div>
         </div>
+
 
         {isLoading ? (
           <StatsSkeleton />

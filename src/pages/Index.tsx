@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import heroBg from "@/assets/golden-rule-hero.png.asset.json";
 
 const features = [
   {
@@ -115,16 +116,17 @@ const Landing = () => {
 
       {/* Hero — midnight band */}
       <section className="relative overflow-hidden">
+        {/* Background artwork */}
+        <div className="pointer-events-none absolute inset-x-0 top-0" aria-hidden>
+          <img
+            src={heroBg.url}
+            alt=""
+            className="w-full aspect-[1024/559] object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
+        </div>
         <div
           className="absolute inset-0 bg-dot-grid opacity-[0.35]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle, hsl(190 90% 55% / 0.28), transparent 65%)",
-          }}
           aria-hidden
         />
         {/* Indicator card */}
@@ -147,7 +149,7 @@ const Landing = () => {
           ))}
         </div>
 
-        <div className="container relative mx-auto px-4 pt-16 pb-20 sm:pt-24 sm:pb-28 text-center">
+        <div className="container relative mx-auto px-4 pt-[36vw] pb-20 sm:pb-28 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 bg-white/5 text-foreground/80 text-xs font-medium mb-6 backdrop-blur">
             <CheckCircle2 className="w-3.5 h-3.5" /> Built for Ecole des
             Sciences Byimana

@@ -115,16 +115,17 @@ const Landing = () => {
 
       {/* Hero — midnight band */}
       <section className="relative overflow-hidden">
+        {/* Background artwork */}
+        <div className="pointer-events-none absolute inset-x-0 top-0" aria-hidden>
+          <img
+            src={heroBg.url}
+            alt=""
+            className="w-full aspect-[1024/559] object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
+        </div>
         <div
           className="absolute inset-0 bg-dot-grid opacity-[0.35]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle, hsl(190 90% 55% / 0.28), transparent 65%)",
-          }}
           aria-hidden
         />
         {/* Indicator card */}

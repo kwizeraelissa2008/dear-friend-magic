@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { StatsSkeleton } from "@/components/Skeletons";
 import { toast } from "sonner";
+import heroBg from "@/assets/golden-rule-hero.png.asset.json";
 
 interface RecentActivity {
   id: string;

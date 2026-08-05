@@ -127,13 +127,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-  }
-
-  body {
-    @apply text-foreground;
-    position: relative;
-    min-height: 100vh;
-    /* Deep ocean canvas: navy → dark teal, with soft cyan + warm glows */
     background-color: hsl(222 47% 8%);
     background-image:
       radial-gradient(720px 480px at 50% 55%, hsl(190 90% 55% / 0.10), transparent 65%),
@@ -141,6 +134,14 @@
       linear-gradient(180deg, hsl(224 60% 6%) 0%, hsl(220 55% 10%) 45%, hsl(196 55% 14%) 100%);
     background-attachment: fixed;
     background-repeat: no-repeat;
+  }
+
+  body {
+    @apply text-foreground;
+    position: relative;
+    min-height: 100vh;
+    /* Deep ocean canvas: navy → dark teal, with soft cyan + warm glows */
+    background: transparent;
   }
 
   /* Flowing cyan → lime accent curve across the lower third of every page */

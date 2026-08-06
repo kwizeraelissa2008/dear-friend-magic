@@ -160,21 +160,22 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      {/* Home background artwork */}
+      {/* Home background artwork — fits the page, content slides over it */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
         aria-hidden
       >
         <img
           src={heroBg.url}
           alt=""
-          className="w-full aspect-[1024/559] max-h-[60vh] object-cover"
+          className="w-full h-full object-cover opacity-95"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/35 to-background/80" />
+
       </div>
 
       <div className="relative z-10 space-y-8">
-        <div className="pt-[26vw] sm:pt-[18vw] lg:pt-[14vw]">
+        <div>
           <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight text-foreground">
             Welcome, {profile?.full_name || "User"}
           </h1>
@@ -189,6 +190,7 @@ const Dashboard = () => {
         </div>
 
 
+
         {isLoading ? (
           <StatsSkeleton />
         ) : (
@@ -198,7 +200,7 @@ const Dashboard = () => {
               return (
                 <Card
                   key={stat.title}
-                  className="stat-glow shine border border-border bg-card shadow-sm transition-all hover:-translate-y-1"
+                  className="stat-glow shine transition-all"
                 >
                   <CardContent className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-2">
@@ -226,7 +228,7 @@ const Dashboard = () => {
 
         <div className="grid gap-6 md:grid-cols-2 stagger">
           {/* Quick Actions */}
-          <Card className="border border-border shadow-sm">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Quick Actions</CardTitle>
               <CardDescription className="text-muted-foreground">
@@ -241,7 +243,7 @@ const Dashboard = () => {
                     <li key={a.to}>
                       <Link
                         to={a.to}
-                        className="group flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50  transition-colors"
+                        className="group flex items-center gap-3 px-4 py-3 hover:bg-primary/10  transition-colors"
                       >
                         <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4" />
@@ -259,7 +261,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Recent Activity — entire card and items are links */}
-          <Card className="border border-border shadow-sm">
+          <Card>
             <CardHeader className="pb-3 flex flex-row items-start justify-between gap-2 space-y-0">
               <div>
                 <CardTitle className="text-lg">Recent Activity</CardTitle>

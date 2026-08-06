@@ -211,11 +211,41 @@
   }
 
 
+  /* Glassmorphic card — tinted pane of glass over the ocean canvas */
+  .glass-card {
+    background-image: linear-gradient(
+      135deg,
+      hsl(0 0% 100% / 0.14) 0%,
+      hsl(210 60% 60% / 0.07) 45%,
+      hsl(222 60% 10% / 0.12) 100%
+    );
+    background-color: hsl(222 47% 12% / 0.45);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid hsl(0 0% 100% / 0.16);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.08) inset,
+      0 10px 30px -12px hsl(222 60% 4% / 0.6),
+      0 30px 70px -30px hsl(222 60% 4% / 0.75);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-3px);
+    border-color: hsl(0 0% 100% / 0.3);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.12) inset,
+      0 14px 34px -12px hsl(222 60% 4% / 0.65),
+      0 0 42px -8px hsl(190 90% 60% / 0.35),
+      0 0 60px -18px hsl(45 95% 62% / 0.25);
+  }
+
   /* Cards */
   .card-elevated {
     @apply bg-card border border-border rounded-2xl;
     box-shadow: var(--shadow-sm);
   }
+
 
   .hover-lift {
     @apply transition-all duration-200;

@@ -135,7 +135,7 @@ const Dashboard = () => {
     <DashboardLayout>
       {/* Fixed background artwork */}
       <div
-        className="pointer-events-none fixed inset-0 -z-10 select-none"
+        className="pointer-events-none fixed inset-0 z-0 select-none"
         aria-hidden
       >
         <img

@@ -160,21 +160,21 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      {/* Home background artwork */}
+      {/* Home background artwork — fits the page, content slides over it */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
         aria-hidden
       >
         <img
           src={heroBg.url}
           alt=""
-          className="w-full aspect-[1024/559] max-h-[60vh] object-cover"
+          className="w-full h-full object-cover opacity-70"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
       </div>
 
       <div className="relative z-10 space-y-8">
-        <div className="pt-[26vw] sm:pt-[18vw] lg:pt-[14vw]">
+        <div>
           <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight text-foreground">
             Welcome, {profile?.full_name || "User"}
           </h1>
@@ -187,6 +187,7 @@ const Dashboard = () => {
             <span>School Discipline Management System</span>
           </div>
         </div>
+
 
 
         {isLoading ? (

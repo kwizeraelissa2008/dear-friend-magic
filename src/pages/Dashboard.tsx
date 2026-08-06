@@ -7,17 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Users,
   AlertTriangle,
   Calendar,
   FileCheck,
-  Clock,
   MessageSquare,
   BarChart3,
-  ArrowRight,
   ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -28,13 +25,6 @@ import { StatsSkeleton } from "@/components/Skeletons";
 import { toast } from "sonner";
 import heroBg from "@/assets/golden-rule-hero.png.asset.json";
 
-interface RecentActivity {
-  id: string;
-  action: string;
-  details: string | null;
-  created_at: string;
-}
-
 const Dashboard = () => {
   useDocumentTitle("Dashboard");
   const { hasRole, userRole, profile } = useAuth();
@@ -44,13 +34,10 @@ const Dashboard = () => {
     activePermissions: 0,
     upcomingEvents: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchStats(), fetchActivity()]).finally(() =>
-      setIsLoading(false),
-    );
+    fetchStats().finally(() => setIsLoading(false));
   }, []);
 
   const fetchStats = async () => {
@@ -78,20 +65,6 @@ const Dashboard = () => {
       });
     } catch {
       toast.error("Failed to load dashboard stats");
-    }
-  };
-
-  const fetchActivity = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("id, action, details, created_at")
-        .order("created_at", { ascending: false })
-        .limit(6);
-      if (error) throw error;
-      setRecentActivity(data || []);
-    } catch {
-      /* non-critical */
     }
   };
 

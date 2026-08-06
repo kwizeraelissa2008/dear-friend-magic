@@ -199,7 +199,7 @@ const Dashboard = () => {
               return (
                 <Card
                   key={stat.title}
-                  className="stat-glow shine border border-border bg-card shadow-sm transition-all hover:-translate-y-1"
+                  className="stat-glow shine transition-all"
                 >
                   <CardContent className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-2">
@@ -227,7 +227,7 @@ const Dashboard = () => {
 
         <div className="grid gap-6 md:grid-cols-2 stagger">
           {/* Quick Actions */}
-          <Card className="border border-border shadow-sm">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Quick Actions</CardTitle>
               <CardDescription className="text-muted-foreground">
@@ -242,7 +242,7 @@ const Dashboard = () => {
                     <li key={a.to}>
                       <Link
                         to={a.to}
-                        className="group flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50  transition-colors"
+                        className="group flex items-center gap-3 px-4 py-3 hover:bg-primary/10  transition-colors"
                       >
                         <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4" />
@@ -260,7 +260,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Recent Activity — entire card and items are links */}
-          <Card className="border border-border shadow-sm">
+          <Card>
             <CardHeader className="pb-3 flex flex-row items-start justify-between gap-2 space-y-0">
               <div>
                 <CardTitle className="text-lg">Recent Activity</CardTitle>

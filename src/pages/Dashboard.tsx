@@ -160,20 +160,6 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      {/* Home background artwork — fits the page, content slides over it */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-        aria-hidden
-      >
-        <img
-          src={heroBg.url}
-          alt=""
-          className="w-full h-full object-cover opacity-95"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/35 to-background/80" />
-
-      </div>
-
       <div className="relative z-10 space-y-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold page-title tracking-tight text-foreground">
@@ -188,6 +174,17 @@ const Dashboard = () => {
             <span>School Discipline Management System</span>
           </div>
         </div>
+
+        {/* Home background artwork — full image, no crop, edge to edge */}
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8 relative" aria-hidden>
+          <img
+            src={heroBg.url}
+            alt=""
+            className="block w-full h-auto object-contain select-none pointer-events-none"
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-background" />
+        </div>
+
 
 
 

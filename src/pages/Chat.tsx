@@ -284,7 +284,7 @@ const Chat = () => {
 
   return (
     <DashboardLayout>
-      <div className="-m-4 sm:-m-6 lg:-m-8 flex h-[calc(100dvh-3.5rem)] overflow-hidden md:gap-3 md:p-3">
+      <div className="-m-4 -mb-28 sm:-m-6 sm:-mb-28 lg:-m-8 lg:-mb-28 md:-mb-10 flex h-[calc(100dvh-3.5rem)] overflow-hidden md:gap-3 md:p-3">
         {/* Chat list */}
         <div
           className={`w-full min-w-0 flex-col overflow-hidden border-border bg-background/60 backdrop-blur-xl md:flex md:w-80 md:shrink-0 md:rounded-2xl md:border ${!showChatList ? "hidden md:flex" : "flex"}`}

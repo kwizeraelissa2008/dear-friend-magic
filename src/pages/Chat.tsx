@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +18,6 @@ import {
   Send,
   Plus,
   Users,
-  User,
   Loader2,
   ArrowLeft,
 } from "lucide-react";
@@ -286,15 +284,15 @@ const Chat = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex gap-4 h-[calc(100vh-8rem)]">
-        {/* Chat list - hidden on mobile when viewing a conversation */}
-        <Card
-          className={`w-full md:w-80 md:shrink-0 flex flex-col ${!showChatList ? "hidden md:flex" : "flex"}`}
+      <div className="-m-4 -mb-28 sm:-m-6 sm:-mb-28 lg:-m-8 lg:-mb-28 md:-mb-10 flex h-[calc(100dvh-3.5rem)] overflow-hidden md:gap-3 md:p-3">
+        {/* Chat list */}
+        <div
+          className={`w-full min-w-0 flex-col overflow-hidden border-border bg-background/60 backdrop-blur-xl md:flex md:w-80 md:shrink-0 md:rounded-2xl md:border ${!showChatList ? "hidden md:flex" : "flex"}`}
         >
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" /> Chats
-            </CardTitle>
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+            <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+              <MessageSquare className="h-5 w-5 text-primary" /> Chats
+            </h2>
             <Dialog
               open={newChatDialog}
               onOpenChange={(open) => {
@@ -303,11 +301,11 @@ const Chat = () => {
               }}
             >
               <DialogTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <Plus className="w-4 h-4" />
+                <Button size="icon" variant="ghost" className="rounded-full">
+                  <Plus className="h-5 w-5" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[calc(100vw-2rem)]">
+              <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Start Private Chat</DialogTitle>
                 </DialogHeader>
@@ -320,7 +318,7 @@ const Chat = () => {
                   <ScrollArea className="h-64">
                     <div className="space-y-2">
                       {filteredUsers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
+                        <p className="py-4 text-center text-sm text-muted-foreground">
                           No users found
                         </p>
                       ) : (
@@ -328,19 +326,19 @@ const Chat = () => {
                           <Button
                             key={u.id}
                             variant="ghost"
-                            className="w-full justify-start gap-3"
+                            className="h-auto w-full justify-start gap-3 py-2"
                             onClick={() => startPrivateChat(u)}
                           >
-                            <Avatar className="w-8 h-8">
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            <Avatar className="h-9 w-9">
+                              <AvatarFallback className="bg-primary/10 text-xs text-primary">
                                 {getInitials(u.full_name)}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="text-left min-w-0">
-                              <p className="text-sm font-medium truncate">
+                            <div className="min-w-0 text-left">
+                              <p className="truncate text-sm font-medium">
                                 {u.full_name}
                               </p>
-                              <p className="text-xs text-muted-foreground truncate">
+                              <p className="truncate text-xs text-muted-foreground">
                                 {u.email}
                               </p>
                             </div>
@@ -352,122 +350,145 @@ const Chat = () => {
                 </div>
               </DialogContent>
             </Dialog>
-          </CardHeader>
-          <CardContent className="flex-1 p-2 overflow-auto">
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain">
             {isLoading ? (
-              <p className="text-center text-sm text-muted-foreground py-4">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 Loading...
               </p>
             ) : conversations.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-4">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 No conversations yet
               </p>
             ) : (
-              <div className="space-y-1">
+              <ul className="divide-y divide-border/60">
                 {conversations.map((c) => (
-                  <Button
-                    key={c.id}
-                    variant={activeConv === c.id ? "secondary" : "ghost"}
-                    className="w-full justify-start gap-2 h-auto py-3"
-                    onClick={() => selectConversation(c.id)}
-                  >
-                    {c.type === "group" ? (
-                      <Users className="w-4 h-4 shrink-0" />
-                    ) : (
-                      <User className="w-4 h-4 shrink-0" />
-                    )}
-                    <span className="truncate text-left">
-                      {c.name || "Private Chat"}
-                    </span>
-                    {c.type === "group" && (
-                      <Badge
-                        variant="outline"
-                        className="ml-auto text-xs shrink-0"
-                      >
-                        Group
-                      </Badge>
-                    )}
-                  </Button>
+                  <li key={c.id}>
+                    <button
+                      onClick={() => selectConversation(c.id)}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 ${activeConv === c.id ? "bg-primary/10" : ""}`}
+                    >
+                      <Avatar className="h-11 w-11 shrink-0">
+                        <AvatarFallback className="bg-primary/15 text-primary">
+                          {c.type === "group" ? (
+                            <Users className="h-5 w-5" />
+                          ) : (
+                            getInitials(c.name || "Private Chat")
+                          )}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-foreground">
+                          {c.name || "Private Chat"}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {c.type === "group" ? "Group chat" : "Direct message"}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Chat panel - hidden on mobile when viewing chat list */}
-        <Card
-          className={`flex-1 flex flex-col min-w-0 ${showChatList ? "hidden md:flex" : "flex"}`}
+        {/* Conversation panel */}
+        <div
+          className={`min-w-0 flex-1 flex-col overflow-hidden border-border bg-background/40 backdrop-blur-xl md:flex md:rounded-2xl md:border ${showChatList ? "hidden md:flex" : "flex"}`}
         >
           {activeConv ? (
             <>
-              <CardHeader className="pb-2 border-b flex flex-row items-center gap-2">
+              <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/70 px-2 md:px-4">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden shrink-0"
+                  className="shrink-0 md:hidden"
                   onClick={() => setShowChatList(true)}
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <CardTitle className="text-lg truncate">
-                  {activeConvData?.name || "Chat"}
-                  {activeConvData?.type === "group" && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      Group
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 p-3 md:p-4 overflow-auto">
-                <div className="space-y-4">
-                  {messages.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-12">
-                      No messages yet. Start the conversation!
-                    </p>
-                  ) : (
-                    messages.map((m) => {
-                      const isMe = m.sender_id === user?.id;
-                      return (
-                        <div
-                          key={m.id}
-                          className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`max-w-[85%] md:max-w-[70%] ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"} rounded-lg p-3 space-y-1`}
-                          >
-                            {!isMe && (
-                              <p className="text-xs font-semibold">
-                                {m.sender_name}
-                                {m.sender_role && (
-                                  <span className="font-normal opacity-70">
-                                    {" "}
-                                    ({formatRole(m.sender_role)})
-                                  </span>
-                                )}
-                              </p>
-                            )}
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {m.content}
-                            </p>
-                            <p
-                              className={`text-xs ${isMe ? "text-primary-foreground/70" : "text-muted-foreground"}`}
-                            >
-                              {new Date(m.created_at).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                  <div ref={messagesEndRef} />
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarFallback className="bg-primary/15 text-primary">
+                    {activeConvData?.type === "group" ? (
+                      <Users className="h-4 w-4" />
+                    ) : (
+                      getInitials(activeConvData?.name || "Chat")
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-sm font-semibold text-foreground">
+                    {activeConvData?.name || "Chat"}
+                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {activeConvData?.type === "group"
+                      ? "Group conversation"
+                      : "Online chat"}
+                  </p>
                 </div>
-              </CardContent>
-              <div className="p-3 md:p-4 border-t flex gap-2">
+                {activeConvData?.type === "group" && (
+                  <Badge variant="outline" className="text-xs">
+                    Group
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex-1 space-y-1.5 overflow-y-auto overscroll-contain px-3 py-4 md:px-6">
+                {messages.length === 0 ? (
+                  <p className="py-12 text-center text-sm text-muted-foreground">
+                    No messages yet. Start the conversation!
+                  </p>
+                ) : (
+                  messages.map((m, idx) => {
+                    const isMe = m.sender_id === user?.id;
+                    const prev = messages[idx - 1];
+                    const grouped = prev && prev.sender_id === m.sender_id;
+                    return (
+                      <div
+                        key={m.id}
+                        className={`flex ${isMe ? "justify-end" : "justify-start"} ${grouped ? "mt-0.5" : "mt-3"}`}
+                      >
+                        <div
+                          className={`max-w-[85%] px-3 py-2 shadow-sm md:max-w-[65%] ${
+                            isMe
+                              ? "rounded-2xl rounded-br-md bg-primary text-primary-foreground"
+                              : "rounded-2xl rounded-bl-md bg-muted text-foreground"
+                          }`}
+                        >
+                          {!isMe && !grouped && (
+                            <p className="mb-0.5 text-xs font-semibold text-primary">
+                              {m.sender_name}
+                              {m.sender_role && (
+                                <span className="font-normal text-muted-foreground">
+                                  {" "}
+                                  ({formatRole(m.sender_role)})
+                                </span>
+                              )}
+                            </p>
+                          )}
+                          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                            {m.content}
+                          </p>
+                          <p
+                            className={`mt-0.5 text-right text-[10px] ${isMe ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                          >
+                            {new Date(m.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <div className="flex shrink-0 items-end gap-2 border-t border-border bg-background/80 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:p-3">
                 <Input
-                  placeholder="Type a message..."
+                  placeholder="Type a message"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => {
@@ -476,34 +497,34 @@ const Chat = () => {
                       handleSend();
                     }
                   }}
-                  className="text-sm"
+                  className="h-11 rounded-full border-border bg-muted/50 px-4 text-sm"
                 />
                 <Button
                   onClick={handleSend}
                   disabled={isSending || !newMessage.trim()}
                   size="icon"
-                  className="shrink-0"
+                  className="h-11 w-11 shrink-0 rounded-full"
                 >
                   {isSending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <Send className="h-4 w-4" />
                   )}
                 </Button>
               </div>
             </>
           ) : (
-            <CardContent className="flex-1 flex items-center justify-center">
+            <div className="flex flex-1 items-center justify-center p-6">
               <div className="text-center">
-                <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                 <h3 className="text-lg font-semibold">Select a conversation</h3>
                 <p className="text-muted-foreground">
                   Choose a chat or start a new one
                 </p>
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
       </div>
     </DashboardLayout>
   );

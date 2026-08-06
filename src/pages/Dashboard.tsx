@@ -168,9 +168,10 @@ const Dashboard = () => {
         <img
           src={heroBg.url}
           alt=""
-          className="w-full h-full object-cover opacity-70"
+          className="w-full h-full object-cover opacity-95"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/35 to-background/80" />
+
       </div>
 
       <div className="relative z-10 space-y-8">

@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
+import InstallPrompt from "@/components/InstallPrompt";
 import { toast } from "sonner";
 import { Bell, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -97,11 +98,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-app">
+      <div className="flex min-h-[100dvh] w-full bg-app">
         <AppSidebar unreadCount={unreadCount} />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur-xl">
+          <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
             <div className="flex h-14 items-center gap-2 px-3 sm:px-5">
               <SidebarTrigger className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground" />
 
@@ -172,7 +173,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </header>
 
-          <main className="relative flex-1 overflow-hidden p-4 pb-28 sm:p-6 lg:p-8 md:pb-10">
+          <main className="relative flex-1 overflow-hidden p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-6 lg:p-8 md:pb-10">
             <div
               className="aurora-orb -left-24 top-10 h-72 w-72"
               style={{ background: "hsl(217 91% 60% / 0.28)" }}
@@ -188,6 +189,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </main>
         </div>
+        <InstallPrompt />
       </div>
     </SidebarProvider>
   );
